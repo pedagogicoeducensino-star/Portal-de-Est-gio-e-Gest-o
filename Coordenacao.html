@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html>
+<head><base target="_top">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+ body { font-family:'Segoe UI', sans-serif; padding: 20px; background: #fdfbf7; color: #333; margin:0; }
+ .container { max-width: 1100px; margin:auto; } 
+ .header { background: linear-gradient(135deg, #795548, #4e342e); color:white; padding:25px; border-radius:12px; margin-bottom:30px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 6px 15px rgba(78, 52, 46, 0.2); border-bottom: 5px solid #ff9800; }
+ 
+ .grid-menu { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap: 20px; margin-bottom: 30px; }
+ .card { background:white; padding:25px 20px; border-radius:12px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.05), inset 0 -4px 0 rgba(0,0,0,0.05); transition: 0.2s; border: 1px solid #eee; text-align: center;}
+ .card:hover { transform:translateY(-3px); box-shadow: 0 10px 20px rgba(255, 152, 0, 0.15), inset 0 -4px 0 #ff9800; border-color: #ff9800;}
+ .card h3 { margin-top: 0; font-size: 1.1em; color: #212121; margin-bottom: 8px;}
+ .card p { margin: 0; font-size:0.85em; color:#666; line-height:1.4; }
+ 
+ /* PAINEL DE NOTIFICAÇÕES */
+ .painel-agenda { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); margin-bottom: 25px; border-top: 6px solid #ff9800; display: block; }
+ .grid-agenda { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; margin-top: 15px; }
+ .card-agenda { background: #fdfdfd; border: 1px solid #ffe0b2; border-radius: 8px; padding: 15px; border-left: 5px solid #ff9800; transition: 0.2s; box-shadow: 0 3px 6px rgba(0,0,0,0.02); }
+ .card-agenda:hover { box-shadow: 0 5px 12px rgba(0,0,0,0.05); }
+ .card-agenda p { margin: 6px 0; font-size: 0.95em; color: #444; }
+ 
+ .secao { display:none; background:white; padding:30px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.05); border-top: 4px solid #ff9800; }
+ h2 { color:#ff9800; border-bottom:2px solid #ffcc80; padding-bottom:12px; margin-top:0; }
+ 
+ input, textarea, select { width:100%; padding:11px; margin:6px 0 16px 0; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; transition: 0.3s; }
+ input:focus, select:focus, textarea:focus { border-color: #ff9800; outline: none; }
+ label { font-weight:bold; font-size:0.9em; color:#444; }
+ button { background: linear-gradient(135deg, #ff9800, #f57c00); color:white; border:none; padding:13px; width:100%; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1em; transition:0.2s; margin-bottom:10px; box-shadow: 0 4px 12px rgba(245,124,0,0.25); }
+ button:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(245,124,0,0.4); }
+ .btn-voltar { background: #757575; margin-top: 20px; box-shadow: none; }
+ .btn-voltar:hover { background: #616161; }
+ .btn-acao { width:auto; padding:5px 8px; font-size:0.85em; margin:2px; border-radius:4px; display:inline-block; cursor:pointer; border:none; color:white; font-weight:bold; }
+ 
+ /* ABAS DA AUDITORIA */
+ .sub-menu-aud { display: flex; gap: 15px; margin-bottom: 20px; }
+ .btn-aud { background: #f5f5f5; color: #333; border: 1px solid #e0e0e0; padding: 12px; font-weight: bold; border-radius: 6px; flex: 1; cursor: pointer; transition:0.2s;}
+ .btn-aud.active { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border-color: #f57c00; box-shadow: 0 4px 10px rgba(245,124,0,0.25); }
+ 
+ table { width:100%; border-collapse:collapse; margin-top:15px; }
+ th { background: linear-gradient(135deg, #5d4037, #3e2723); color: #ffc107; padding:12px 10px; text-align:left; border:1px solid #d7ccc8; font-size: 0.9em;}
+ td { padding:12px 10px; border:1px solid #ddd; font-size:0.9em; vertical-align: middle;}
+ 
+ .select-fat { width: auto; padding: 6px; margin: 0; font-size: 0.9em; border-radius: 4px; border: 2px solid #eee; }
+ .select-fat:focus { border-color: #ff9800; outline: none; }
+ .box-metrica { background:#fff; border:1px solid #eee; border-top:5px solid #ff9800; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.03); cursor: pointer; transition: 0.3s; }
+ .box-metrica:hover { transform: scale(1.02); box-shadow: 0 6px 15px rgba(255,152,0,0.15); }
+ .item-gestao { background:#fffdfa; padding:15px; margin-bottom:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #ff9800; border: 1px solid #ffe0b2;}
+
+ /* ESTILO DA MODAL EXTRA */
+ .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(62, 39, 35, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(4px); }
+ .modal-cgd { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); border-top: 8px solid #ff9800; animation: popIn 0.3s ease-out; }
+ @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="container">
+ 
+ <div class="header">
+  <h1 style="margin:0;"><i class="fas fa-user-tie"></i> Painel da Coordenação</h1>
+  <button onclick="localStorage.removeItem('sessao_usuario_papel'); google.script.run.withSuccessHandler(function(url){ window.open(url + '?page=Index', '_top'); }).getUrlApp()" style="background: linear-gradient(135deg, #ff5252, #c62828); width:auto; padding:10px 25px; margin:0; border:none; color:white; border-radius:8px; font-weight:bold; cursor:pointer;">Sair</button>
+ </div>
+ 
+ <div id="dashboard" style="display:block;">
+   <div class="grid-menu">
+    <div class="card" style="border-top: 5px solid #ff5252;" onclick="mostrar('sec-cadastro-est')">
+      <h3 style="color:#c62828;"><i class="fas fa-users"></i> Gestão de Estagiários</h3>
+      <p>Cadastre, edite e bloqueie acessos</p>
+    </div>
+   
+    <div class="card" style="border-top: 5px solid #ff9800;" onclick="mostrar('sec-treinamento')">
+      <h3 style="color:#ff9800;"><i class="fas fa-video"></i> Treinamentos</h3>
+      <p>Gerencie a Trilha do Saber</p>
+    </div>
+   
+    <div class="card" style="border-top: 5px solid #ffb300;" onclick="abrirGratificacoes()">
+      <h3 style="color:#ffb300;"><i class="fas fa-award"></i> Auditoria Detalhada</h3>
+      <p>Lançamentos e Histórico de Checklist</p>
+    </div>
+
+    <div class="card" style="border-top: 5px solid #ff5722;" onclick="mostrar('sec-caixinha')">
+      <h3 style="color:#ff5722;"><i class="fas fa-money-bill-wave"></i> Contabilização</h3>
+      <p>Controle de Pagamentos e Metas</p>
+    </div>
+   
+    <div class="card" style="border-top: 5px solid #757575;" onclick="mostrar('sec-guias')">
+      <h3 style="color:#616161;"><i class="fas fa-book"></i> Guias e Materiais</h3>
+      <p>Alimente a biblioteca virtual</p>
+    </div>
+   
+    <div class="card" style="border-top: 5px solid #e65100;" onclick="mostrar('sec-checklist')">
+      <h3 style="color:#e65100;"><i class="fas fa-tasks"></i> Tarefas do Checklist</h3>
+      <p>Estruture as rotinas diárias</p>
+    </div>
+   </div>
+
+   <div class="painel-agenda" id="blocoNotificacoesDashboard">
+     <h2 style="margin-top:0; color:#e65100; font-size: 1.4em;"><i class="fas fa-bell"></i> Linha do Tempo: Notificações Pendentes</h2>
+     <p style="color:#666; margin:0 0 10px 0; font-size:0.95em;">Lançamentos faturados somem automaticamente para limpar sua tela.</p>
+     
+     <div class="grid-agenda" id="listaNotificacoesDashboard">
+        <p style="color:#999; text-align:center; width:100%; grid-column: 1 / -1;">Buscando atividades recentes...</p>
+     </div>
+   </div>
+
+ </div>
+
+ <div id="sec-caixinha" class="secao">
+  <h2 style="color:#ff5722; border-color:#ffcc80;"><i class="fas fa-money-bill-wave"></i> Sistema de Contabilização Mensal</h2>
+  
+  <div style="background:#fff3e0; padding:15px; border-radius:8px; border:1px solid #ffcc80; margin-bottom:20px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+         <div style="display: flex; flex-direction: column;">
+             <label style="font-size: 0.85em; margin-bottom: 4px;">Mês Alvo (MM/AAAA):</label>
+             <input type="text" id="cx_mes_ref" placeholder="Ex: 06/2026" style="margin:0; padding:8px; height: 38px;">
+         </div>
+         <div style="display: flex; flex-direction: column;">
+             <label style="font-size: 0.85em; margin-bottom: 4px;">Perfil Operacional:</label>
+             <select id="cx_perfil" onchange="toggleCaixinhaPerfil()" style="margin:0; padding:8px; height: 38px;">
+                <option value="">Selecione o perfil...</option>
+                <option value="Estagiario">Estagiário (Individual)</option>
+                <option value="Supervisor">Supervisor de Estágio (Equipe)</option>
+             </select>
+         </div>
+      </div>
+  </div>
+
+  <div id="cx_area_est" style="display:none; background:#fffdfa; padding:15px; border-radius:8px; border:1px solid #ffe0b2;">
+     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end;">
+         <div style="display: flex; flex-direction: column;">
+             <label style="font-size: 0.85em; margin-bottom: 4px;">Estagiário:</label>
+             <select id="cx_nome_est" style="margin:0; padding:8px; height: 38px;"></select>
+         </div>
+         <div style="display: flex; flex-direction: column;">
+             <label style="font-size: 0.85em; margin-bottom: 4px;">Meta Ocupação (%):</label>
+             <input type="number" step="0.1" id="cx_meta_alvo" placeholder="Ex: 80" style="margin:0; padding:8px; height: 38px;">
+         </div>
+         <div style="display: flex; flex-direction: column;">
+             <label style="font-size: 0.85em; margin-bottom: 4px;">Ocupação Feita (%):</label>
+             <input type="number" step="0.1" id="cx_meta_feita" placeholder="Ex: 62.5" style="margin:0; padding:8px; height: 38px;">
+         </div>
+         <div style="display: flex; flex-direction: column;">
+             <label style="font-size: 0.85em; margin-bottom: 4px;">Materiais Livres (Manual):</label>
+             <input type="number" id="cx_qtd_mat_est" value="0" style="margin:0; padding:8px; height: 38px;">
+         </div>
+     </div>
+     
+     <button style="background: linear-gradient(135deg, #4CAF50, #388E3C); margin-top:15px; width: 100%;" onclick="calcularCaixinhaEst()">🧮 Calcular Ganhos do Estagiário</button>
+  </div>
+
+  <div id="cx_area_sup" style="display:none; background:#fffdfa; padding:15px; border-radius:8px; border:1px solid #ffe0b2;">
+     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+         <div style="display: flex; flex-direction: column;">
+             <label style="font-size: 0.85em; margin-bottom: 4px;">Ocupação Geral Sala (%):</label>
+             <input type="number" step="0.1" id="cx_sup_ocupacao" placeholder="Ex: 75" style="margin:0; padding:8px; height: 38px;">
+         </div>
+         <div style="display: flex; flex-direction: column;">
+             <label style="font-size: 0.85em; margin-bottom: 4px;">Materiais Equipe (Manual):</label>
+             <input type="number" id="cx_sup_mat" value="0" style="margin:0; padding:8px; height: 38px;">
+         </div>
+     </div>
+     
+     <button style="background: linear-gradient(135deg, #ff9800, #f57c00); margin-top:15px; width: 100%;" onclick="calcularCaixinhaSup()">🧮 Calcular Ganhos do Supervisor</button>
+  </div>
+
+  <div id="cx_resultado" style="margin-top:25px; font-size:1.05em; display:none;"></div>
+  <button class="btn-voltar" onclick="mostrar('dashboard')">Voltar ao Painel</button>
+ </div>
+
+ <div id="sec-cadastro-est" class="secao">
+  <h2 style="color:#ff5252; border-color:#ffcaa6;"><i class="fas fa-users-cog"></i> Gestão de Estagiários</h2>
+  
+  <div style="background:#fefefe; padding:20px; border-radius:8px; border:1px solid #ddd; margin-bottom:20px;">
+    <h3 id="tituloFormEstagiario" style="margin-top:0; color:#d32f2f;">Cadastrar Novo Estagiário</h3>
+    <input type="hidden" id="estagiario_editando" value="">
+    
+    <label>Nome Completo:</label>
+    <input type="text" id="cad_nome" placeholder="Nome do Aluno">
+ 
+    <label>Senha / ID de Acesso no Portal:</label>
+    <input type="text" id="cad_senha" placeholder="Crie uma senha ou use a matrícula">
+ 
+    <label>Tipo de Estágio:</label>
+    <select id="cad_tipo">
+      <option value="Educação">Educação</option>
+      <option value="Secretaria">Secretaria</option>
+      <option value="Administrativo">Administrativo</option>
+    </select>
+ 
+    <div style="display:flex; gap:15px;">
+       <div style="flex:1;"><label>Horário Início:</label><input type="time" id="cad_inicio"></div>
+       <div style="flex:1;"><label>Horário Fim:</label><input type="time" id="cad_fim"></div>
+       <div style="flex:1;"><label>Horas/Dia:</label><input type="number" id="cad_horas" placeholder="Ex: 6"></div>
+    </div>
+ 
+    <label>Dias de Estágio (Marque os dias da semana):</label>
+    <div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap; padding:10px; background:#fff8f0; border-radius:6px; border: 1px solid #ffe0b2;">
+      <label style="font-weight:normal; margin:0;"><input type="checkbox" value="Seg" class="cad_dias" style="width:auto; margin:0;"> Seg</label>
+      <label style="font-weight:normal; margin:0;"><input type="checkbox" value="Ter" class="cad_dias" style="width:auto; margin:0;"> Ter</label>
+      <label style="font-weight:normal; margin:0;"><input type="checkbox" value="Qua" class="cad_dias" style="width:auto; margin:0;"> Qua</label>
+      <label style="font-weight:normal; margin:0;"><input type="checkbox" value="Qui" class="cad_dias" style="width:auto; margin:0;"> Qui</label>
+      <label style="font-weight:normal; margin:0;"><input type="checkbox" value="Sex" class="cad_dias" style="width:auto; margin:0;"> Sex</label>
+      <label style="font-weight:normal; margin:0;"><input type="checkbox" value="Sab" class="cad_dias" style="width:auto; margin:0;"> Sáb</label>
+    </div>
+ 
+    <label>Categoria:</label>
+    <select id="cad_categoria">
+      <option value="Remunerado">Remunerado</option>
+      <option value="Obrigatório">Obrigatório</option>
+    </select>
+ 
+    <div style="display:flex; gap:10px;">
+      <button style="background: linear-gradient(135deg, #f44336, #d32f2f);" id="btnSalvarEstag" onclick="salvarEstag()">💾 Salvar Estagiário</button>
+      <button style="background:#757575;" id="btnCancelarEdicaoEstag" onclick="cancelarEdicaoEstag()">Cancelar Edição</button>
+    </div>
+  </div>
+ 
+  <h3>Estagiários Cadastrados no Sistema</h3>
+  <div style="overflow-x:auto;">
+    <table id="tabelaEstagiarios"></table>
+  </div>
+  <button class="btn-voltar" onclick="mostrar('dashboard')">Voltar ao Painel</button>
+ </div>
+ 
+ <div id="sec-treinamento" class="secao">
+  <h2><i class="fas fa-video"></i> Gerenciar Trilha do Saber</h2>
+  
+  <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #ffcc80;">
+    <h3 id="tituloFormTreino" style="margin-top:0; color:#e65100;">Criar Novo Treinamento</h3>
+    <input type="hidden" id="treino_editando_id" value="">
+    
+    <label>Título do Vídeo / Bloco:</label>
+    <input type="text" id="t_titulo" placeholder="Ex: Procedimentos de Sala">
+ 
+    <label>URL do Vídeo (YouTube):</label>
+    <input type="text" id="t_url" placeholder="Cole o link do YouTube aqui">
+ 
+    <div style="background: #fff; padding: 20px; border-radius: 8px; margin-top: 15px; border: 1px solid #ccc;">
+      <h4 style="margin-top: 0; color:#333;">Banco de Questões deste Vídeo</h4>
+      <label>Enunciado da Questão:</label>
+      <textarea id="t_enunciado" rows="2" placeholder="Digite o enunciado..."></textarea>
+      
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div><label>Alternativa A:</label><input type="text" id="t_a"></div>
+        <div><label>Alternativa B:</label><input type="text" id="t_b"></div>
+        <div><label>Alternativa C:</label><input type="text" id="t_c"></div>
+        <div><label>Alternativa D:</label><input type="text" id="t_d"></div>
+      </div>
+      <label>Alternativa E (Opcional):</label><input type="text" id="t_e">
+      
+      <label>Gabarito (Alternativa Correta):</label>
+      <select id="t_correta">
+        <option value="">Selecione...</option>
+        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option>
+      </select>
+ 
+      <button type="button" style="background: linear-gradient(135deg, #4CAF50, #388E3C); margin-top:10px;" onclick="adicionarQuestaoLocal()">+ Adicionar Questão ao Bloco</button>
+ 
+      <h4 style="margin-top:20px; margin-bottom:5px;">Questões prontas para envio:</h4>
+      <ul id="listaQuestLocal" style="padding-left:20px; font-size:0.9em; color:#444;"><li>Nenhuma questão anexada ainda.</li></ul>
+    </div>
+ 
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button style="background: linear-gradient(135deg, #ff9800, #f57c00); margin:0;" id="btnSalvarTreino" onclick="publicarChecklistLote()">🚀 Publicar Treinamento</button>
+      <button style="background:#757575; display:none; margin:0;" id="btnCancelarEdicaoTreino" onclick="cancelarEdicaoTreino()">Cancelar Edição</button>
+    </div>
+  </div>
+ 
+  <div style="margin-top:40px; border-top:2px solid #ddd; padding-top:20px;">
+    <h3>Treinamentos Ativos Atualmente</h3>
+    <div id="listaTreinamentosGestao">Carregando lista de controle...</div>
+  </div>
+ 
+  <button class="btn-voltar" onclick="mostrar('dashboard')">Voltar ao Painel</button>
+ </div>
+ 
+ <div id="sec-gratificacoes" class="secao" style="max-width: 100%;">
+  <h2 style="color:#ffb300; border-color:#ffcc80;"><i class="fas fa-award"></i> Auditoria de Production Operacional</h2>
+  <p>Selecione o estagiário para auditar faturamentos de gratificações e o histórico de preenchimento diário do checklist.</p>
+ 
+  <div id="caixasEstagiarios">Carregando painel corporativo...</div>
+  
+  <div id="areaAuditoriaFiltro" style="margin-top:35px; display:none; border: 1px solid #ddd; padding: 25px; border-radius: 12px; background: #fff;">
+     <h3 style="color:#e65100; margin-top:0;" id="tituloEstagiarioAudit">Auditoria</h3>
+     
+     <div class="sub-menu-aud">
+        <button id="tab-btn-lanc" class="btn-aud active" onclick="mostrarTabAud('lanc')">Lançamentos e Gratificações</button>
+        <button id="tab-btn-chk" class="btn-aud" onclick="mostrarTabAud('chk')">Histórico de Checklists (Diário)</button>
+     </div>
+     
+     <div id="tab-aud-lanc" style="overflow-x:auto;"></div>
+     <div id="tab-aud-chk" style="overflow-x:auto; display:none;"></div>
+  </div>
+ 
+  <button class="btn-voltar" onclick="mostrar('dashboard')" style="margin-top:20px;">Voltar ao Painel</button>
+ </div>
+ 
+ <div id="sec-guias" class="secao">
+  <h2 style="color:#757575; border-color:#ccc;"><i class="fas fa-book"></i> Guias e Materiais (E-Books)</h2>
+ 
+  <label>Título do E-Book / Manual:</label>
+  <input type="text" id="g_titulo" placeholder="Ex: Manual de Conduta Pedagogica">
+ 
+  <label>Link de Compartilhamento do Google Drive:</label>
+  <input type="text" id="g_link" placeholder="Cole o link completo do Drive aqui">
+ 
+  <button style="background: linear-gradient(135deg, #ff9800, #f57c00);" onclick="atualizarGuia()">Publicar E-Book</button>
+ 
+  <div style="margin-top:40px; border-top:2px solid #ddd; padding-top:20px;">
+    <h3>E-Books Ativos no Portal</h3>
+    <div id="listaGuiasGestao">Carregando acervo...</div>
+  </div>
+ 
+  <button class="btn-voltar" onclick="mostrar('dashboard')">Voltar ao Painel</button>
+ </div>
+ 
+ <div id="sec-checklist" class="secao">
+  <h2 style="color:#e65100; border-color:#ffcc80;"><i class="fas fa-tasks"></i> Gerenciamento de Tarefas do Checklist</h2>
+ 
+  <div style="background:#fff3e0; padding:20px; border-radius:8px; margin-bottom:20px; border:1px solid #ffcc80;">
+    <label>Seção Principal:</label>
+    <select id="chk_secao">
+      <option value="Seção Individual">Seção Individual</option>
+      <option value="Seção Coletiva">Seção Coletiva</option>
+    </select>
+ 
+    <label>Nome da Subseção (Ex: Administrativa):</label>
+    <input type="text" id="chk_subsecao" placeholder="Digite a área operacional">
+ 
+    <label>Atividade para Desenvolver:</label>
+    <input type="text" id="chk_pergunta" placeholder="Ex: Registrar corretamente os horários...">
+ 
+    <button style="background: linear-gradient(135deg, #ff9800, #f57c00);" onclick="adicionarChecklistLocal()">+ Adicionar Item ao Rascunho</button>
+  </div>
+ 
+  <h3>Rascunho do Novo Checklist</h3>
+  <table id="tabelaRascunhoChecklist">
+    <tr><th>Seção</th><th>Subseção</th><th>Atividade</th><th>Remover</th></tr>
+    <tr id="linhaVaziaRascunho"><td colspan="4" style="text-align:center; color:#999;">Nenhuma atividade no rascunho.</td></tr>
+  </table>
+ 
+  <button style="margin-top:25px; background: linear-gradient(135deg, #4CAF50, #388E3C);" onclick="publicarChecklistLote()">🚀 Publicar Rascunho no Portal</button>
+ 
+  <div style="margin-top:40px; border-top:2px solid #ddd; padding-top:20px;">
+    <h3>Tarefas Ativas no Sistema</h3>
+    <table id="tabelaChecklistsAtivos"></table>
+  </div>
+ 
+  <button class="btn-voltar" onclick="mostrar('dashboard')">Voltar ao Painel</button>
+ </div>
+
+ <div class="modal-overlay" id="modalDetalhesChecklist" style="display:none;">
+   <div class="modal-cgd" style="border-top: 8px solid #ff9800; max-width: 550px; text-align: left; background: white; padding: 30px; border-radius: 12px;">
+     <h2 style="color:#e65100; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0;"><i class="fas fa-search-plus"></i> Detalhamento do Checklist</h2>
+     <div id="conteudoDetalhesChecklist" style="margin-top: 15px; max-height: 350px; overflow-y: auto;"></div>
+     <button onclick="fecharModalDetalhesChecklist()" style="background: linear-gradient(135deg, #ff9800, #f57c00); margin-top: 20px; width: 100%; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">Fechar Painel de Análise</button>
+   </div>
+ </div>
+
+ <div class="modal-overlay" id="modalAlertaGeral">
+   <div class="modal-cgd" id="modalAlertaGeralCard" style="border-top: 8px solid #f44336;">
+     <i class="fas fa-exclamation-triangle" id="modalAlertaGeralIcon" style="color: #f44336;"></i>
+     <h2 id="modalAlertaGeralTitulo" style="color: #212121;">Mensagem do Sistema</h2>
+     <p id="modalAlertaGeralTexto"></p>
+     <button id="modalAlertaGeralBtn" onclick="fecharAlertaGeral()" style="background: linear-gradient(135deg, #ff9800, #f57c00);">Ok</button>
+   </div>
+ </div>
+
+ <div class="modal-overlay" id="modalConfirmacaoGeral">
+   <div class="modal-cgd" style="border-top: 8px solid #ff9800; max-width: 480px;">
+     <i class="fas fa-question-circle" style="color: #ff9800;"></i>
+     <h2 style="color: #212121;">Confirmação de Ação</h2>
+     <p id="modalConfirmacaoGeralTexto"></p>
+     <div style="display: flex; gap: 15px; margin-top: 20px;">
+       <button id="modalConfirmacaoGeralBtnSim" style="background: linear-gradient(135deg, #4CAF50, #388E3C); flex: 1; padding: 12px; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Confirmar</button>
+       <button onclick="fecharConfirmacaoGeral()" style="background: #757575; flex: 1; padding: 12px; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Voltar</button>
+     </div>
+   </div>
+ </div>
+ 
+</div>
+ 
+<script>
+ var rascunhoChecklist = [];
+ var questoesVideoLocal = [];
+ var cacheEstagiarios = [];
+ var loopNotificacoes;
+ 
+ // SISTEMA DE ALERTAS EXCLUSIVOS DA COORDENAÇÃO
+ function exibirAlertaGeral(texto, titulo, icone, corBorda) {
+   document.getElementById('modalAlertaGeralTexto').innerHTML = texto;
+   document.getElementById('modalAlertaGeralTitulo').innerText = titulo || "Aviso da Coordenação";
+   var icoEl = document.getElementById('modalAlertaGeralIcon');
+   icoEl.className = "fas " + (icone || "fa-exclamation-triangle");
+   icoEl.style.color = corBorda || "#f44336";
+   document.getElementById('modalAlertaGeralCard').style.borderTopColor = corBorda || "#f44336";
+   document.getElementById('modalAlertaGeral').style.display = 'flex';
+ }
+ function fecharAlertaGeral() { document.getElementById('modalAlertaGeral').style.display = 'none'; }
+ 
+ var callbackConfirmacaoGeral = null;
+ function exibirConfirmacaoGeral(texto, callback) {
+   document.getElementById('modalConfirmacaoGeralTexto').innerText = texto;
+   callbackConfirmacaoGeral = callback;
+   document.getElementById('modalConfirmacaoGeral').style.display = 'flex';
+ }
+ function fecharConfirmacaoGeral() { document.getElementById('modalConfirmacaoGeral').style.display = 'none'; }
+ document.getElementById('modalConfirmacaoGeralBtnSim').onclick = function() {
+   fecharConfirmacaoGeral(); if(callbackConfirmacaoGeral) callbackConfirmacaoGeral();
+ };
+
+ window.addEventListener("load", function() {
+    localStorage.setItem("sessao_usuario_papel", "Coordenacao");
+    carregarPainelNotificacoesSilencioso();
+    loopNotificacoes = setInterval(function() {
+        if(document.getElementById('dashboard').style.display === 'block') { carregarPainelNotificacoesSilencioso(); }
+    }, 30000); 
+ });
+
+ function mostrar(id) {
+  document.querySelectorAll('.secao, #dashboard').forEach(function(s) { s.style.display = 'none'; });
+  if(id === 'dashboard') { document.getElementById('dashboard').style.display = 'block'; carregarPainelNotificacoesSilencioso(); } 
+  else { document.getElementById(id).style.display = 'block'; }
+  if(id === 'sec-cadastro-est') carregarListaEstagiarios();
+  if(id === 'sec-treinamento') { treinosLimparForm(); carregarTreinosGestao(); }
+  if(id === 'sec-guias') carregarGuiasGestao();
+  if(id === 'sec-checklist') carregarChecklistsAtivos();
+ }
+
+ // --- FUNÇÕES DA CONTABILIZAÇÃO MENSAL ---
+ function toggleCaixinhaPerfil() {
+    var p = document.getElementById('cx_perfil').value;
+    document.getElementById('cx_area_est').style.display = p === 'Estagiario' ? 'block' : 'none';
+    document.getElementById('cx_area_sup').style.display = p === 'Supervisor' ? 'block' : 'none';
+    document.getElementById('cx_resultado').style.display = 'none';
+    if(p === 'Estagiario') {
+        var sel = document.getElementById('cx_nome_est'); sel.innerHTML = '<option value="">Carregando...</option>';
+        google.script.run.withSuccessHandler(function(ests) {
+            sel.innerHTML = '<option value="">Selecione...</option>';
+            ests.forEach(function(e) { sel.innerHTML += '<option value="'+e.nome+'">'+e.nome+'</option>'; });
+        }).carregarEstagiarios();
+    }
+ }
+
+ function extrairMesAno(dataStr) {
+    if(!dataStr) return "";
+    var limpa = String(dataStr).split(' ')[0]; 
+    if(limpa.indexOf('/') > -1) { var p = limpa.split('/'); if(p.length >= 3) return p[1] + '/' + p[2]; } 
+    else if(limpa.indexOf('-') > -1) { var p = limpa.split('T')[0].split('-'); if(p.length >= 2) return p[1] + '/' + p[0]; }
+    return limpa;
+ }
+
+ function calcularOcupacaoInterpolada(ocupacao, tabela) {
+    if(ocupacao < 60) return 0;
+    var keys = Object.keys(tabela).map(Number).sort(function(a,b){return a-b;});
+    if(ocupacao >= keys[keys.length-1]) return tabela[keys[keys.length-1]];
+    for(var i=0; i<keys.length-1; i++) {
+        if(ocupacao >= keys[i] && ocupacao <= keys[i+1]) {
+            var p1 = keys[i], v1 = tabela[keys[i]]; var p2 = keys[i+1], v2 = tabela[keys[i+1]];
+            if(p1 === p2) return v1;
+            return v1 + ((ocupacao - p1) / (p2 - p1)) * (v2 - v1);
+        }
+    }
+    return 0;
+ }
+
+ function calcularCaixinhaEst() {
+    var nome = document.getElementById('cx_nome_est').value;
+    var metaAlvo = parseFloat(document.getElementById('cx_meta_alvo').value);
+    var metaFeita = parseFloat(document.getElementById('cx_meta_feita').value);
+    var qtdMat = parseInt(document.getElementById('cx_qtd_mat_est').value) || 0;
+    var mesRef = document.getElementById('cx_mes_ref').value.trim();
+    if(!nome || isNaN(metaAlvo) || isNaN(metaFeita) || !mesRef) return exibirAlertaGeral("Preencha todos os parâmetros necessários para faturar o estagiário.", "Campos Vazios");
+    
+    document.getElementById('cx_resultado').style.display = 'block'; document.getElementById('cx_resultado').innerHTML = "Calculando métricas... aguarde.";
+    google.script.run.withSuccessHandler(function(dados) {
+        var ligacoesAprovadas = 0, cancelamentosAprovados = 0;
+        dados.registros.forEach(function(r) {
+            var mesOcorr = extrairMesAno(String(r[4]));
+            if(mesOcorr !== mesRef) return;
+            var tipo = r[1], compareceu = r[12];
+            if(compareceu === 'Sim' || compareceu === '✅ Compareceu' || compareceu === '✅ Sim') {
+                if(tipo === 'Ligações e Reposições') ligacoesAprovadas++;
+                if(tipo === 'Cancelamento') cancelamentosAprovados++;
+            }
+        });
+        
+        var totalPct = 0, countChk = 0;
+        dados.checklists.forEach(function(c) {
+            var mesChk = extrairMesAno(String(c[0]));
+            if(mesChk === mesRef && c[4] !== undefined && c[4] !== "") { 
+                var valorTratado = String(c[4]).replace('%', '').trim(); totalPct += parseFloat(valorTratado); countChk++; 
+            }
+        });
+        var mediaChk = countChk > 0 ? (totalPct / countChk) : 0;
+        var bateuMeta = metaFeita >= metaAlvo;
+        var valLig = bateuMeta ? 0.25 : 0.20; var totalLig = ligacoesAprovadas * valLig;
+        var valCan = bateuMeta ? 3.50 : 3.00; var totalCan = cancelamentosAprovados * valCan;
+        
+        var valMat = 0;
+        if(qtdMat >= 1 && qtdMat <= 10) valMat = bateuMeta ? 5.00 : 3.00;
+        else if(qtdMat >= 11 && qtdMat <= 15) valMat = bateuMeta ? 8.00 : 5.00;
+        else if(qtdMat >= 16) valMat = bateuMeta ? 10.00 : 8.00;
+        var totalMat = qtdMat * valMat;
+        var totalObrigacoes = (mediaChk / 100) * 20.00;
+        
+        var tabelaOcupacao = bateuMeta ? {60:10, 65:13, 70:18, 75:22, 80:25, 85:30} : {60:10, 65:13, 70:15, 75:18, 80:21, 85:25};
+        var totalOcup = calcularOcupacaoInterpolada(metaFeita, tabelaOcupacao);
+        var valorFinal = totalLig + totalCan + totalMat + totalObrigacoes + totalOcup;
+        
+        document.getElementById('cx_resultado').innerHTML = `<div style="background:#fff3e0; padding:20px; border-radius:8px; border:2px solid #ff9800; line-height:1.8;">
+            <h3 style="color:#e65100; margin-top:0;">Resumo Financeiro: ${nome} (${mesRef})</h3>
+            <p><strong>Meta da Sala Batida?</strong> ${bateuMeta ? '✅ SIM' : '❌ NÃO'}</p><hr>
+            <ul style="list-style:none; padding:0;">
+                <li>📞 Ligações Aprovadas (${ligacoesAprovadas}x R$ ${valLig.toFixed(2)}): <strong>R$ ${totalLig.toFixed(2)}</strong></li>
+                <li>❌ Cancelamentos (${cancelamentosAprovados}x R$ ${valCan.toFixed(2)}): <strong>R$ ${totalCan.toFixed(2)}</strong></li>
+                <li>📦 Materiais Manuais (${qtdMat}x R$ ${valMat.toFixed(2)}): <strong>R$ ${totalMat.toFixed(2)}</strong></li>
+                <li>✅ Checklist (Média ${mediaChk.toFixed(1)}% de R$ 20,00): <strong>R$ ${totalObrigacoes.toFixed(2)}</strong></li>
+                <li>🏫 Ocupação da Sala (${metaFeita}%): <strong>R$ ${totalOcup.toFixed(2)}</strong></li>
+            </ul>
+            <h2 style="color:#ff5722; border-top:1px solid #ffcc80; padding-top:10px; margin-bottom:0;">💰 TOTAL A PAGAR: R$ ${valorFinal.toFixed(2)}</h2>
+        </div>`;
+        document.getElementById('cx_meta_alvo').value = ''; document.getElementById('cx_meta_feita').value = ''; document.getElementById('cx_qtd_mat_est').value = '0';
+    }).carregarDadosAuditoria(nome);
+ }
+
+ // ======= LÓGICA CORRIGIDA E ATUALIZADA DO SUPERVISOR CONFORME SOLICITADO =======
+ function calcularCaixinhaSup() {
+    var ocupacao = parseFloat(document.getElementById('cx_sup_ocupacao').value);
+    var qtdMat = parseInt(document.getElementById('cx_sup_mat').value) || 0;
+    var mesRef = document.getElementById('cx_mes_ref').value.trim();
+    if(isNaN(ocupacao) || !mesRef) return exibirAlertaGeral("Preencha o período de referência e a taxa de ocupação da equipe.", "Falta Parâmetros");
+    
+    document.getElementById('cx_resultado').style.display = 'block'; document.getElementById('cx_resultado').innerHTML = "Agrupando dados da equipe... aguarde.";
+    google.script.run.withSuccessHandler(function(todosRegistros) {
+        var ligacoesEquipe = 0;
+        todosRegistros.forEach(function(r) {
+            var mesOcorr = extrairMesAno(String(r[4]));
+            if(mesOcorr !== mesRef) return;
+            var tipo = r[1], compareceu = r[12];
+            if((compareceu === 'Sim' || compareceu === '✅ Compareceu' || compareceu === '✅ Sim') && tipo === 'Ligações e Reposições') { ligacoesEquipe++; }
+        });
+        
+        var valLigSup = 0;
+        // CONTABILIZAÇÃO GERAL E MULTIPLICAÇÃO REPARADA A PARTIR DE 1 LIGAÇÃO DA EQUIPE
+        if(ligacoesEquipe >= 1 && ligacoesEquipe <= 20) valLigSup = 0.25;
+        else if(ligacoesEquipe >= 21 && ligacoesEquipe <= 30) valLigSup = 0.50;
+        else if(ligacoesEquipe >= 31 && ligacoesEquipe <= 40) valLigSup = 0.70;
+        else if(ligacoesEquipe >= 41) valLigSup = 1.00;
+        var ganhosLigacoes = ligacoesEquipe * valLigSup;
+        
+        var valMatSup = 0;
+        if(qtdMat >= 1 && qtdMat <= 10) valMatSup = 8.00;
+        else if(qtdMat >= 11 && qtdMat <= 15) valMatSup = 12.00;
+        else if(qtdMat >= 16) valMatSup = 15.00;
+        var ganhosMateriais = qtdMat * valMatSup;
+        
+        var ganhosOcupacao = 0;
+        if(ocupacao >= 85) ganhosOcupacao = 180.00;
+        else if(ocupacao >= 80) ganhosOcupacao = 150.00;
+        else if(ocupacao >= 75) ganhosOcupacao = 100.00;
+        else if(ocupacao >= 65) ganhosOcupacao = 80.00;
+
+        var totalSup = ganhosLigacoes + ganhosMateriais + ganhosOcupacao;
+
+        document.getElementById('cx_resultado').innerHTML = `<div style="background:#fff3e0; padding:20px; border-radius:8px; border:2px solid #ff5722; font-size:1.05em; line-height:1.8;">
+            <h3 style="color:#e65100; margin-top:0;">Resumo Financeiro: SUPERVISOR (${mesRef})</h3><hr>
+            <ul style="list-style:none; padding:0;">
+                <li>📞 Volume de Ligações da Equipe (${ligacoesEquipe}x R$ ${valLigSup.toFixed(2)}): <strong>R$ ${ganhosLigacoes.toFixed(2)}</strong></li>
+                <li>📦 Materiais Manuais (${qtdMat}x R$ ${valMatSup.toFixed(2)}): <strong>R$ ${ganhosMateriais.toFixed(2)}</strong></li>
+                <li>🏫 Ocupação Geral (${ocupacao}%): <strong>R$ ${ganhosOcupacao.toFixed(2)}</strong></li>
+            </ul>
+            <h2 style="color:#d84315; border-top:1px solid #ffcc80; padding-top:10px; margin-bottom:0;">💰 TOTAL A PAGAR: R$ ${totalSup.toFixed(2)}</h2>
+        </div>`;
+        document.getElementById('cx_sup_ocupacao').value = ''; document.getElementById('cx_sup_mat').value = '0';
+    }).carregarRegistros();
+ }
+
+ // --- NOTIFICAÇÕES EM TEMPO REAL ---
+ function carregarPainelNotificacoesSilencioso() {
+    google.script.run.withSuccessHandler(function(notificacoes) {
+        var conteiner = document.getElementById('listaNotificacoesDashboard'); var html = '';
+        if(!notificacoes || notificacoes.length === 0) {
+            conteiner.innerHTML = '<p style="color:#999; text-align:center; width:100%; grid-column: 1 / -1; font-weight:bold; padding:20px;">✓ Sem notificações pendentes. Sua mesa está limpa!</p>'; return;
+        }
+        notificacoes.forEach(function(n) {
+            var d = new Date(n.dataRaw); var dataFormatada = d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+            var corBorda = "#ff9800", icone = "fa-check-circle";
+            if(n.acao.indexOf('Checklist') > -1) { corBorda = "#e65100"; icone = "fa-tasks"; }
+            else if(n.acao.indexOf('Cancelamento') > -1) { corBorda = "#f44336"; icone = "fa-times-circle"; }
+            else if(n.acao.indexOf('Materiais') > -1) { corBorda = "#ffb300"; icone = "fa-box"; }
+
+            html += `<div class="card-agenda" style="border-left-color: ${corBorda};">
+                <p style="margin-top:0; font-weight:bold; color:#333; font-size:1.05em;"><i class="fas fa-user-circle"></i> ${n.estagiario}</p>
+                <p style="color:#666; font-size:0.85em; margin: 4px 0;"><i class="fas fa-calendar-alt"></i> ${dataFormatada}</p>
+                <p style="color:${corBorda}; font-weight:bold; margin-bottom:4px;"><i class="fas ${icone}"></i> ${n.acao}</p>
+                <p style="color:#777; font-size:0.85em; margin:0;">${n.detalhe}</p>
+            </div>`;
+        });
+        conteiner.innerHTML = html;
+    }).buscarNotificacoesRecentes();
+ }
+ 
+ // --- CADASTRO DE ESTAGIÁRIOS ---
+ function salvarEstag() {
+  var inputsDias = document.querySelectorAll('.cad_dias:checked'); var arrDias = []; 
+  inputsDias.forEach(function(d) { arrDias.push(d.value); });
+  var nomeAntigoEditando = document.getElementById('estagiario_editando').value;
+
+  var obj = {
+    nome: document.getElementById('cad_nome').value, senha: document.getElementById('cad_senha').value,
+    tipo: document.getElementById('cad_tipo').value, inicio: document.getElementById('cad_inicio').value,
+    fim: document.getElementById('cad_fim').value, totalHoras: document.getElementById('cad_horas').value,
+    dias: arrDias, categoria: document.getElementById('cad_categoria').value
+  };
+  if(!obj.nome || !obj.senha) return exibirAlertaGeral("Nome e Senha são obrigatórios!", "Falta Dados");
+ 
+  if(nomeAntigoEditando) {
+      google.script.run.withSuccessHandler(function() {
+        exibirAlertaGeral("Dados do estagiário atualizados com sucesso!", "Atualizado", "fa-check-circle", "#4CAF50");
+        cancelarEdicaoEstag(); carregarListaEstagiarios();
+      }).atualizarEstagiario(nomeAntigoEditando, obj);
+  } else {
+      google.script.run.withSuccessHandler(function() {
+        exibirAlertaGeral("Estagiário(a) cadastrado com sucesso!", "Cadastrado", "fa-check-circle", "#4CAF50");
+        cancelarEdicaoEstag(); carregarListaEstagiarios();
+      }).salvarEstagiario(obj);
+  }
+ }
+ 
+ function carregarListaEstagiarios() {
+  google.script.run.withSuccessHandler(function(ests) {
+    cacheEstagiarios = ests; var tbl = document.getElementById('tabelaEstagiarios');
+    tbl.innerHTML = "<tr><th>Nome</th><th>Setor</th><th>Dias</th><th>Status</th><th style='width: 120px;'>Ação</th></tr>";
+    if(ests.length === 0) { tbl.innerHTML += "<tr><td colspan='5' style='text-align:center;'>Nenhum estagiário cadastrado.</td></tr>"; return; }
+ 
+    ests.forEach(function(e) {
+      var badgeStatus = e.status === 'Bloqueado' ? '<span style="color:red; font-weight:bold;">Bloqueado</span>' : '<span style="color:green; font-weight:bold;">Ativo</span>';
+      var statusBtn = `<button class="btn-acao" style='background:#ff9800;' title='Bloquear/Desbloquear' onclick="alternarBloqueio('${e.nome}', '${e.status}')"><i class="fas fa-ban"></i></button>`;
+      var editBtn = `<button class="btn-acao" style='background:#ffb300;' title='Editar Dados' onclick="editarEst('${e.nome}')"><i class="fas fa-edit"></i></button>`;
+      var delBtn = `<button class="btn-acao" style='background:#ff5252;' title='Excluir' onclick="excluirEst('${e.nome}')"><i class="fas fa-trash"></i></button>`;
+      tbl.innerHTML += `<tr><td><strong>${e.nome}</strong></td><td>${e.tipo}</td><td>${e.dias}</td><td>${badgeStatus}</td><td>${editBtn}${statusBtn}${delBtn}</td></tr>`;
+    });
+  }).carregarEstagiarios();
+ }
+ 
+ function editarEst(nome) {
+    var est = cacheEstagiarios.find(function(e) { return e.nome === nome; }); if(!est) return;
+    document.getElementById('estagiario_editando').value = nome;
+    document.getElementById('cad_nome').value = est.nome;
+    document.getElementById('tituloFormEstagiario').innerText = "Editando Dados de: " + nome;
+    document.getElementById('btnSalvarEstag').innerText = "💾 Atualizar Cadastro";
+    document.getElementById('btnSalvarEstag').style.background = "#ff9800";
+    document.getElementById('btnCancelarEdicaoEstag').style.display = "block";
+    window.scrollTo(0,0);
+    exibirAlertaGeral("Modo de edição ativado. Preencha a senha e os horários novamente para atualizar o cadastro corporativo.", "Edição Ativada", "fa-edit", "#ff9800");
+ }
+
+ function cancelarEdicaoEstag() {
+    document.getElementById('estagiario_editando').value = "";
+    document.getElementById('tituloFormEstagiario').innerText = "Cadastrar Novo Estagiário";
+    document.getElementById('btnSalvarEstag').innerText = "💾 Salvar Estagiário";
+    document.getElementById('btnSalvarEstag').style.background = "#ff5252";
+    document.getElementById('btnCancelarEdicaoEstag').style.display = "none";
+    document.querySelectorAll('#sec-cadastro-est input').forEach(function(i) { if(i.type==='checkbox') i.checked=false; else if (i.type !== 'hidden') i.value=''; });
+ }
+
+ function alternarBloqueio(nome, statusAtual) {
+    exibirConfirmacaoGeral("Deseja alterar o acesso de " + nome + "?\n\nIsso refletirá imediatamente na tentativa de login do estagiário.", function() {
+        google.script.run.withSuccessHandler(function(res) {
+            exibirAlertaGeral("Status de acesso alterado no sistema corporativo!", "Acesso Modificado", "fa-check-circle", "#4CAF50");
+            carregarListaEstagiarios();
+        }).alternarStatusEstagiario(nome, statusAtual);
+    });
+ }
+
+ function excluirEst(nome) {
+  exibirConfirmacaoGeral('Tem certeza que deseja excluir o cadastro de ' + nome + '? Ele perderá acesso ao portal permanentemente.', function() {
+    google.script.run.withSuccessHandler(carregarListaEstagiarios).excluirEstagiario(nome);
+  });
+ }
+ 
+ // --- TREINAMENTOS ---
+ function adicionarQuestaoLocal() {
+  var enu = document.getElementById('t_enunciado').value;
+  var a = document.getElementById('t_a').value; var b = document.getElementById('t_b').value;
+  var c = document.getElementById('t_c').value; var d = document.getElementById('t_d').value;
+  var e = document.getElementById('t_e').value; var cor = document.getElementById('t_correta').value;
+  if(!enu || !cor) return exibirAlertaGeral("Enunciado e alternativa correta são fundamentais!", "Erro de Questão");
+ 
+  questoesVideoLocal.push({enunciado: enu, a: a, b: b, c: c, d: d, e: e, correta: cor });
+  document.getElementById('t_enunciado').value = ''; document.getElementById('t_a').value = '';
+  document.getElementById('t_b').value = ''; document.getElementById('t_c').value = '';
+  document.getElementById('t_d').value = ''; document.getElementById('t_e').value = '';
+  document.getElementById('t_correta').value = '';
+  renderQuestLocalList();
+ }
+ 
+ function renderQuestLocalList() {
+  var ul = document.getElementById('listaQuestLocal');
+  if(questoesVideoLocal.length === 0) { ul.innerHTML = '<li>Nenhuma questão anexada ainda.</li>'; return; }
+  ul.innerHTML = '';
+  questoesVideoLocal.forEach(function(q,i) { 
+      ul.innerHTML += `<li><button class="btn-acao" onclick="removerQuestaoLocal(${i})" style="background:#ff5252; margin-right:8px;">X</button> <strong>Q${i+1}:</strong> ${q.enunciado} (Gabarito: ${q.correta})</li>`;
+  });
+ }
+
+ function removerQuestaoLocal(index) { questoesVideoLocal.splice(index, 1); renderQuestLocalList(); }
+ 
+ function treinosLimparForm() {
+  questoesVideoLocal = []; document.getElementById('treino_editando_id').value = '';
+  document.getElementById('tituloFormTreino').innerText = 'Criar Novo Treinamento';
+  document.getElementById('btnSalvarTreino').innerText = '🚀 Publicar Treinamento';
+  document.getElementById('btnCancelarEdicaoTreino').style.display = 'none';
+  document.getElementById('t_titulo').value = ''; document.getElementById('t_url').value = '';
+  document.getElementById('t_enunciado').value = ''; document.getElementById('t_a').value = '';
+  document.getElementById('t_b').value = ''; document.getElementById('t_c').value = '';
+  document.getElementById('t_d').value = ''; document.getElementById('t_e').value = '';
+  document.getElementById('t_correta').value = '';
+  renderQuestLocalList();
+ }
+ function cancelarEdicaoTreino() { treinosLimparForm(); }
+ 
+ function publicarChecklistLote() {
+  var enuPendente = document.getElementById('t_enunciado').value;
+  if (enuPendente.trim() !== '') { return exibirAlertaGeral("Aviso: O campo 'Enunciado' possui texto rascunhado. Clique em '+ Adicionar Questão ao Bloco' antes de publicar o vídeo.", "Rascunho Pendente"); }
+
+  var dados = { titulo: document.getElementById('t_titulo').value, url: document.getElementById('t_url').value, questoes: questoesVideoLocal };
+  if(!dados.titulo || !dados.url) return exibirAlertaGeral("Preencha o Título e a URL de transmissão do vídeo.", "Campos Faltando");
+ 
+  var tituloAntigo = document.getElementById('treino_editando_id').value;
+  if (tituloAntigo) {
+      google.script.run.withSuccessHandler(function() {
+        exibirAlertaGeral("Treinamento atualizado com sucesso no portal!", "Sucesso", "fa-check-circle", "#4CAF50");
+        treinosLimparForm(); carregarTreinosGestao();
+      }).updateTreinamentoBackend(tituloAntigo, dados);
+  } else {
+      google.script.run.withSuccessHandler(function() {
+        exibirAlertaGeral("Bloco de treinamento publicado na Trilha do Saber!", "Sucesso", "fa-check-circle", "#4CAF50");
+        treinosLimparForm(); carregarTreinosGestao();
+      }).salvarTreinamentoLote(dados);
+  }
+ }
+ 
+ function carregarTreinosGestao() {
+  google.script.run.withSuccessHandler(function(treinos) {
+    var html = '';
+    if(treinos.length === 0) { html = '<p>Nenhum treinamento cadastrado.</p>'; } 
+    else {
+      treinos.forEach(function(t) {
+        var qJSON = encodeURIComponent(JSON.stringify(t.questoes));
+        html += `<div class="item-gestao">
+          <div><strong>${t.titulo}</strong><br><small style="color:#666;">Questões Vinculadas: ${t.questoes.length}</small></div>
+          <div>
+            <button class="btn-acao" style="background:#ff9800;" onclick="editarTreino('${t.titulo}', '${t.url}', '${qJSON}')">Alterar</button>
+            <button class="btn-acao" style="background:#ff5252;" onclick="excluirTreino('${t.titulo}')">Excluir</button>
+          </div>
+        </div>`;
+      });
+    }
+    document.getElementById('listaTreinamentosGestao').innerHTML = html;
+  }).carregarTreinamentos();
+ }
+ 
+ function editarTreino(titulo, url, questoesJSON) {
+  document.getElementById('treino_editando_id').value = titulo;
+  document.getElementById('tituloFormTreino').innerText = 'Editando: ' + titulo;
+  document.getElementById('btnSalvarTreino').innerText = '💾 Salvar Alterações';
+  document.getElementById('btnCancelarEdicaoTreino').style.display = 'block';
+  document.getElementById('t_titulo').value = titulo; document.getElementById('t_url').value = url;
+  
+  document.getElementById('t_enunciado').value = ''; document.getElementById('t_a').value = '';
+  document.getElementById('t_b').value = ''; document.getElementById('t_c').value = '';
+  document.getElementById('t_d').value = ''; document.getElementById('t_e').value = '';
+  document.getElementById('t_correta').value = '';
+  questoesVideoLocal = JSON.parse(decodeURIComponent(questoesJSON));
+  renderQuestLocalList(); window.scrollTo(0,0);
+ }
+ 
+ function excluirTreino(titulo) {
+  exibirConfirmacaoGeral('Tem certeza que deseja excluir o bloco "' + titulo + '"?', function() {
+    google.script.run.withSuccessHandler(function() { 
+        exibirAlertaGeral('Treinamento removido com sucesso!', 'Removido', 'fa-check-circle', '#4CAF50'); carregarTreinosGestao(); 
+    }).excluirTreinamento(titulo);
+  });
+ }
+ 
+ // --- AUDITORIA (GRATIFICAÇÕES E CHECKLISTS) ---
+ function abrirGratificacoes() {
+  mostrar('sec-gratificacoes'); document.getElementById('areaAuditoriaFiltro').style.display = 'none';
+  document.getElementById('caixasEstagiarios').innerHTML = "Gerando indicadores rápidos...";
+ 
+  google.script.run.withSuccessHandler(function(metricas) {
+    var htmlCards = '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:20px; margin-top:15px;">';
+    var nomes = Object.keys(metricas);
+    nomes.forEach(function(nome) {
+      var mObj = metricas[nome].meses; var resumoMesesText = ""; var mChaves = Object.keys(mObj);
+      if(mChaves.length === 0) { resumoMesesText = "<small style='color:#999;'>Sem produção homologada.</small>"; } 
+      else {
+        mChaves.forEach(function(mNome) {
+          resumoMesesText += `<div style="font-size:0.85em; border-top:1px dashed #eee; padding-top:4px; margin-top:4px;">
+            <strong>📅 ${mNome}:</strong> 📞${mObj[mNome].ligacoes} lig. | ❌ ${mObj[mNome].cancelamentos} canc. | 📋${mObj[mNome].checklists} chk.
+          </div>`;
+        });
+      }
+      htmlCards += `<div class="box-metrica" onclick="renderizarRelatorioFiltro('${nome}')">
+        <h4 style="margin:0 0 8px 0; color:#e65100;">👤 ${nome}</h4>
+        ${resumoMesesText}
+        <strong style="color:#ff9800; font-size:0.8em; display:block; margin-top:12px; text-align:right;">Auditar Produção e Checklists ➔</strong>
+      </div>`;
+    });
+    htmlCards += '</div>'; document.getElementById('caixasEstagiarios').innerHTML = htmlCards;
+  }).carregarMetricasCoordenacao();
+ }
+ 
+ function mostrarTabAud(tab) {
+    document.getElementById('tab-aud-lanc').style.display = (tab === 'lanc') ? 'block' : 'none';
+    document.getElementById('tab-aud-chk').style.display = (tab === 'chk') ? 'block' : 'none';
+    document.getElementById('tab-btn-lanc').className = (tab === 'lanc') ? 'btn-aud active' : 'btn-aud';
+    document.getElementById('tab-btn-chk').className = (tab === 'chk') ? 'btn-aud active' : 'btn-aud';
+ }
+
+ function formatarDataHora(dataString) {
+    if(!dataString) return '-'; var d = new Date(dataString); if(isNaN(d.getTime())) return dataString;
+    return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+ }
+
+ function renderizarRelatorioFiltro(nomeEstagiario) {
+  document.getElementById('areaAuditoriaFiltro').style.display = 'block';
+  document.getElementById('tituloEstagiarioAudit').innerText = "Auditoria Detalhada: " + nomeEstagiario;
+  document.getElementById('tab-aud-lanc').innerHTML = "<p>Buscando lançamentos...</p>";
+  document.getElementById('tab-aud-chk').innerHTML = "<p>Buscando checklists...</p>";
+  mostrarTabAud('lanc');
+ 
+  google.script.run.withSuccessHandler(function(dados) {
+    var htmlLanc = '<table><tr><th>Data de Ocorrência</th><th>Tipo</th><th>Nome do Aluno</th><th>Agendamento</th><th>Status (Presença)</th><th>Conferência (Faturamento)</th></tr>';
+    var itensRenderizados = 0;
+    dados.registros.reverse().forEach(function(l) {
+      var faturamentoAtual = l[13] || "Pendente";
+      if (faturamentoAtual === 'Faturado' || faturamentoAtual === 'Não Faturado') { return; }
+
+      var dataOcorr = l[4]; if(dataOcorr && typeof dataOcorr === 'string' && dataOcorr.indexOf('T') > -1) { dataOcorr = dataOcorr.split('T')[0].split('-').reverse().join('/'); }
+      var badgeTipo = `<span style="background:#fff3e0; padding:3px 6px; border-radius:4px; font-weight:bold; font-size:0.85em; color:#e65100; border: 1px solid #ffcc80;">${l[1]}</span>`;
+      if(l[1] === 'Cancelamento') badgeTipo = `<span style="background:#ffebee; padding:3px 6px; border-radius:4px; font-weight:bold; font-size:0.85em; color:#c62828; border: 1px solid #ef9a9a;">${l[1]}</span>`;
+      else if(l[1] === 'Materiais' || l[1] === 'Materials') badgeTipo = `<span style="background:#f5f5f5; padding:3px 6px; border-radius:4px; font-weight:bold; font-size:0.85em; color:#424242; border: 1px solid #e0e0e0;">Materiais</span>`;
+
+      var agendouVal = l[7];
+      var retornoStr = (agendouVal === 'Sim') ? `<span style="color:#2e7d32; font-weight:bold;">Para ${l[8]} às ${l[9]}</span>` : `<span style="color:#d32f2f;">Não Agendou</span>`;
+      var statusBadge = l[12];
+      if(statusBadge === 'Pendente') statusBadge = '⏳ Pendente';
+      else if(statusBadge === 'Sim' || statusBadge === '✅ Compareceu' || statusBadge === '✅ Sim') statusBadge = '✅ Compareceu';
+      else if(statusBadge === 'Não' || statusBadge === '❌ Faltou' || statusBadge === '❌ Não') statusBadge = '❌ Faltou';
+
+      var desativarSelect = "";
+      if (agendouVal === 'Sim' && (statusBadge === '⏳ Pendente' || statusBadge === 'Pendente')) {
+          desativarSelect = "disabled"; statusBadge = '<span style="color:#ff9800; font-weight:bold;">⏳ Aguardando Estagiário</span>';
+      }
+
+      var selectFat = `<select class="select-fat fat-item" data-linha="${l[14]}" ${desativarSelect}>
+        <option value="Pendente" ${faturamentoAtual === 'Pendente' ? 'selected' : ''}>Em Análise</option>
+        <option value="Faturado" ${faturamentoAtual === 'Faturado' ? 'selected' : ''}>Faturado (Aprovado)</option>
+        <option value="Não Faturado" ${faturamentoAtual === 'Não Faturado' ? 'selected' : ''}>Não Faturado (Rejeitado)</option>
+      </select>`;
+
+      htmlLanc += `<tr><td>${dataOcorr}</td><td>${badgeTipo}</td><td><strong>${l[2]}</strong><br><small>Mat: ${l[3]}</small></td><td>${retornoStr}</td><td><strong>${statusBadge}</strong></td><td>${selectFat}</td></tr>`;
+      itensRenderizados++;
+    });
+
+    if(itensRenderizados === 0) { htmlLanc += '<tr><td colspan="6" style="text-align:center; padding: 20px;">Nenhum lançamento pendente encontrado para faturamento.</td></tr>'; }
+    htmlLanc += '</table>';
+    htmlLanc += `<div style="text-align:right; margin-top:20px;"><button style="background: linear-gradient(135deg, #4CAF50, #388E3C); width:auto; padding:15px 30px; border-radius:8px; font-size:1.1em;" onclick="salvarFeedbackFaturamento('${nomeEstagiario}')"><i class="fas fa-paper-plane"></i> Enviar Feedback de Faturamento</button></div>`;
+    document.getElementById('tab-aud-lanc').innerHTML = htmlLanc;
+
+    // --- RENDERIZA ABA DE CHECKLISTS ---
+    var htmlChk = '<table><tr><th>Data e Hora do Envio</th><th>Ação Registrada</th><th>Status da Validação</th><th>Desempenho</th><th>Detalhamento</th></tr>';
+    if(dados.checklists.length === 0) { htmlChk += '<tr><td colspan="5" style="text-align:center; padding: 20px;">O estagiário ainda não enviou nenhum checklist diário.</td></tr>'; } 
+    else {
+        dados.checklists.reverse().forEach(function(c) {
+            var pctFormatado = (c[4] !== undefined && c[4] !== "") ? String(c[4]).replace('%', '') + '%' : 'N/A';
+            var btnDetalhes = "";
+            if(c[5]) { var detalheJSON = encodeURIComponent(c[5]); btnDetalhes = `<button class="btn-acao" style="background: linear-gradient(135deg, #ff9800, #f57c00); padding:6px 12px;" onclick="abrirModalDetalhesChecklist('${detalheJSON}')"><i class="fas fa-search-plus"></i> Ver Itens</button>`; } 
+            else { btnDetalhes = `<span style="color:#999; font-size:0.85em;">Sem dados retroativos</span>`; }
+
+            htmlChk += `<tr><td>${formatarDataHora(c[0])}</td><td><span style="background:#fff3e0; color:#e65100; padding:4px 8px; border-radius:4px; font-weight:bold;"><i class="fas fa-check-circle"></i> ${c[2]}</span></td><td><span style="color:#2e7d32; font-weight:bold;">${c[3]}</span></td><td><strong style="color:#212121;">Cumprimento: ${pctFormatado}</strong></td><td style="text-align:center;">${btnDetalhes}</td></tr>`;
+        });
+    }
+    htmlChk += '</table>'; document.getElementById('tab-aud-chk').innerHTML = htmlChk;
+  }).carregarDadosAuditoria(nomeEstagiario);
+ }
+
+ function abrirModalDetalhesChecklist(jsonStrEscaped) {
+    var data = JSON.parse(decodeURIComponent(jsonStrEscaped)); var div = document.getElementById('conteudoDetalhesChecklist');
+    var listaErros = "";
+    if(data.naoFeitos && data.naoFeitos.length > 0) {
+       listaErros = "<h4 style='color:#c62828; margin-bottom:5px; margin-top:15px;'>❌ Atividades NÃO Realizadas:</h4><ul style='padding-left:20px; color:#c62828; line-height:1.5;'>";
+       data.naoFeitos.forEach(function(item) { listaErros += "<li>" + item + "</li>"; });
+       listaErros += "</ul>";
+    } else { listaErros = "<p style='color:#2e7d32; font-weight:bold; margin-top:15px;'>🎉 Excelente! Nenhuma atividade foi deixada em aberto (0% Não feito).</p>"; }
+    
+    div.innerHTML = `<p style="margin-top:0;"><strong>📊 Resumo Estatístico da Rotina Diária:</strong></p>
+       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px; background:#fff8f0; padding:12px; border-radius:8px; font-size:0.95em; border: 1px solid #ffe0b2;">
+          <div>🟢 <strong>Sim / Ausente:</strong> ${data.pctSimAusente || 0}% <br><small style="color:#666;">(${data.totalSim || 0} Sim | ${data.totalAusente || 0} Ausente)</small></div>
+          <div>🔴 <strong>Não Feito:</strong> ${data.pctNao || 0}% <br><small style="color:#666;">(${data.totalNao || 0} itens marcados como 'Não')</small></div>
+       </div>${listaErros}`;
+    document.getElementById('modalDetalhesChecklist').style.display = 'flex';
+ }
+ function fecharModalDetalhesChecklist() { document.getElementById('modalDetalhesChecklist').style.display = 'none'; }
+
+ function salvarFeedbackFaturamento(nomeEstag) {
+    var selects = document.querySelectorAll('.fat-item'); var loteAtualizacoes = [];
+    for(var i=0; i<selects.length; i++) {
+        if (selects[i].disabled) continue;
+        var linhaPlanilha = parseInt(selects[i].getAttribute('data-linha'), 10); var status = selects[i].value;
+        loteAtualizacoes.push({linha: linhaPlanilha, status: status});
+    }
+    if(loteAtualizacoes.length === 0) return exibirAlertaGeral("Nenhum item válido para salvar faturamento.", "Ação Inválida");
+
+    document.getElementById('tab-aud-lanc').innerHTML = "<p>Salvando feedback no sistema... Aguarde.</p>";
+    google.script.run.withSuccessHandler(function() {
+        exibirAlertaGeral("Feedback de faturamento transmitido com sucesso!", "Faturamento Concluído", "fa-check-circle", "#4CAF50");
+        abrirGratificacoes(); carregarPainelNotificacoesSilencioso(); 
+    }).salvarFaturamentosLote(loteAtualizacoes);
+ }
+ 
+ // --- GUIAS E E-BOOKS ---
+ function carregarGuiasGestao() {
+  google.script.run.withSuccessHandler(function(guias) {
+    var html = ''; if(guias.length === 0) { html = '<p>Nenhum material cadastrado.</p>'; } 
+    else {
+      guias.forEach(function(g) {
+        html += `<div class="item-gestao" style="border-left-color:#757575;">
+          <div><strong>📖 ${g.titulo}</strong><br><small style="color:#666; word-break:break-all;">Link: ${g.link}</small></div>
+          <div>
+             <button class="btn-acao" style="background:#ffb300;" onclick="editarGuia('${g.titulo}', '${g.link}')">Alterar</button>
+             <button class="btn-acao" style="background:#ff5252;" onclick="excluirGuiaItem('${g.titulo}')">Excluir</button>
+          </div>
+        </div>`;
+      });
+    }
+    document.getElementById('listaGuiasGestao').innerHTML = html;
+  }).carregarGuias();
+ }
+ 
+ function atualizarGuia() {
+  var tit = document.getElementById('g_titulo').value; var lnk = document.getElementById('g_link').value;
+  if(!tit || !lnk) return exibirAlertaGeral("Preencha o título e insira o link completo do Drive.", "Dados Ausentes");
+ 
+  google.script.run.withSuccessHandler(function() {
+    exibirAlertaGeral("Manual publicado no acervo corporativo!", "Publicado", "fa-check-circle", "#4CAF50");
+    document.getElementById('g_titulo').value = ''; document.getElementById('g_link').value = ''; carregarGuiasGestao();
+  }).salvarLinkGuia({titulo:tit, link:lnk});
+ }
+ function editarGuia(titulo, link) { document.getElementById('g_titulo').value = titulo; document.getElementById('g_link').value = link; window.scrollTo(0,0); }
+ function excluirGuiaItem(titulo) {
+  exibirConfirmacaoGeral('Excluir manual "' + titulo + '"?', function() {
+    google.script.run.withSuccessHandler(function() { carregarGuiasGestao(); }).excluirGuia(titulo);
+  });
+ }
+ 
+ // --- CHECKLIST ---
+ function adicionarChecklistLocal() {
+  var sec = document.getElementById('chk_secao').value; var sub = document.getElementById('chk_subsecao').value; var per = document.getElementById('chk_pergunta').value;
+  if(!sub || !per) return exibirAlertaGeral("Subseção e atividade são obrigatórios.", "Campos Vazios");
+ 
+  rascunhoChecklist.push({secao: sec, subsecao: sub, pergunta: per }); document.getElementById('chk_pergunta').value = ''; renderizarRascunhoTable();
+ }
+ function removerRascunhoItem(idx) { rascunhoChecklist.splice(idx,1); renderizarRascunhoTable(); }
+ 
+ function renderizarRascunhoTable() {
+  var table = document.getElementById('tabelaRascunhoChecklist'); table.innerHTML = '<tr><th>Seção</th><th>Subseção</th><th>Atividade</th><th>Remover</th></tr>';
+  if(rascunhoChecklist.length === 0) { table.innerHTML += '<tr id="linhaVaziaRascunho"><td colspan="4" style="text-align:center; color:#999;">Nenhuma atividade no rascunho.</td></tr>'; return; }
+  rascunhoChecklist.forEach(function(item, idx) {
+    table.innerHTML += `<tr><td>${item.secao}</td><td><strong>${item.subsecao}</strong></td><td>${item.pergunta}</td><td><button class="btn-acao" style="background:#ff5252;" onclick="removerRascunhoItem(${idx})">Remover</button></td></tr>`;
+  });
+ }
+ 
+ function carregarChecklistsAtivos() {
+  google.script.run.withSuccessHandler(function(perguntas) {
+    var table = document.getElementById('tabelaChecklistsAtivos'); table.innerHTML = '<tr><th>Seção</th><th>Subseção</th><th>Atividade</th><th>Ação</th></tr>';
+    if(perguntas.length === 0) { table.innerHTML += '<tr><td colspan="4" style="text-align:center;">Nenhuma tarefa ativa.</td></tr>'; return; }
+    perguntas.forEach(function(p) {
+      table.innerHTML += `<tr><td>${p.secao}</td><td>${p.subsecao}</td><td>${p.pergunta}</td><td><button class="btn-acao" style="background:#ff5252;" onclick="excluirAtividadeChecklist('${p.pergunta}')">Excluir</button></td></tr>`;
+    });
+  }).carregarPerguntasChecklist();
+ }
+ 
+ function excluirAtividadeChecklist(pergunta) {
+  exibirConfirmacaoGeral('Excluir esta atividade do Checklist diário?', function() {
+    google.script.run.withSuccessHandler(function() { carregarChecklistsAtivos(); }).excluirConfigChecklist(pergunta);
+  });
+ }
+</script>
+</body>
+</html>

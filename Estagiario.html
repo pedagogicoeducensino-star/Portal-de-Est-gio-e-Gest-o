@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html>
+<head><base target="_top">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #fdfbf7; color: #333; margin: 0; }
+  .container { max-width: 1100px; margin: auto; } 
+  
+  .header-estagiario { background: linear-gradient(135deg, #795548, #4e342e); color: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: 0 8px 20px rgba(78, 52, 46, 0.2); border-bottom: 5px solid #ff9800; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; background: rgba(255,255,255,0.08); padding: 15px; border-radius: 10px; font-size: 0.95em; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+  
+  .welcome-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; border-left: 6px solid #ff9800; }
+  .welcome-box p { margin: 5px 0; color: #555; line-height: 1.5; font-size:1.05em; }
+  
+  .grid-menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
+  .card { background: white; padding: 20px; border-radius: 12px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.05), inset 0 -4px 0 rgba(0,0,0,0.05); transition: all 0.3s ease; border: 1px solid #eee; text-align: center; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(255, 152, 0, 0.2), inset 0 -4px 0 #ff9800; border-color: #ff9800; }
+  .card h3 { margin-top: 0; font-size: 1.05em; color: #212121; }
+  .card p { margin: 5px 0 0 0; font-size: 0.8em; color: #666; line-height: 1.3; }
+
+  /* PAINEL DE AGENDAMENTOS */
+  .painel-agenda { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); margin-bottom: 25px; border-top: 6px solid #ff5722; display: block; }
+  .grid-agenda { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; margin-top: 15px; }
+  .card-agenda { background: #fffdf9; border: 1px solid #ffe0b2; border-radius: 10px; padding: 15px; border-left: 5px solid #ff9800; box-shadow: 0 4px 8px rgba(0,0,0,0.03); }
+  .card-agenda p { margin: 6px 0; font-size: 0.95em; color: #444; }
+  .btn-agenda-container { display: flex; gap: 10px; margin-top: 15px; }
+  .btn-comp { background: linear-gradient(135deg, #4CAF50, #388E3C); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; flex: 1; transition: 0.2s; box-shadow: 0 3px 6px rgba(76,175,80,0.2); }
+  .btn-comp:hover { transform: translateY(-1px); box-shadow: 0 5px 12px rgba(76,175,80,0.4); }
+  .btn-ncomp { background: linear-gradient(135deg, #f44336, #D32F2F); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; flex: 1; transition: 0.2s; box-shadow: 0 3px 6px rgba(244,67,54,0.2); }
+  .btn-ncomp:hover { transform: translateY(-1px); box-shadow: 0 5px 12px rgba(244,67,54,0.4); }
+  
+  .secao { display: none; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.05); border-top: 4px solid #ff9800; }
+  .sub-menu { display: flex; gap: 15px; margin-bottom: 25px; }
+  .btn-sub { background: #f5f5f5; color: #333; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; font-size: 1em; transition: 0.2s; border: 1px solid #e0e0e0; }
+  .btn-sub.active { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border-color: #f57c00; box-shadow: 0 4px 10px rgba(245,124,0,0.3); }
+  
+  .etapa-form { display: none; }
+  .etapa-form.active { display: block; }
+  input, select, textarea { width: 100%; padding: 11px; margin: 6px 0 16px 0; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 0.95em; transition: 0.3s; }
+  input:focus, select:focus, textarea:focus { border-color: #ff9800; outline: none; box-shadow: 0 0 8px rgba(255,152,0,0.15); }
+  label { font-weight: bold; font-size: 0.9em; color: #444; }
+  
+  button.action-btn { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; margin-top: 10px; box-shadow: 0 4px 12px rgba(245,124,0,0.3); transition: 0.2s; }
+  button.action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(245,124,0,0.45); }
+  button.next-btn { background: linear-gradient(135deg, #ffb300, #ff9800); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; margin-top: 10px; box-shadow: 0 4px 12px rgba(255,152,0,0.2); transition: 0.2s; }
+  button.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255,152,0,0.35); }
+  button.back-btn { background: #757575; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; transition: 0.2s; }
+  button.back-btn:hover { background: #616161; }
+  
+  .btn-group-comunicacao { display: flex; gap: 15px; margin: 10px 0 20px 0; }
+  .btn-comunicacao { flex: 1; padding: 15px; border: 2px solid #eee; background: white; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: 0.3s; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.02); }
+  .btn-comunicacao.selected { border-color: #ff9800; background: #fff3e0; color: #e65100; box-shadow: inset 0 0 10px rgba(245,124,0,0.15); }
+
+  /* MEUS RELATÓRIOS */
+  table.rel-table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 850px; }
+  table.rel-table th { background: linear-gradient(135deg, #5d4037, #3e2723); color: #ffc107; padding: 12px; text-align: left; font-size: 0.9em; border: 1px solid #d7ccc8; }
+  table.rel-table td { padding: 10px; border: 1px solid #ddd; font-size: 0.9em; color:#333; vertical-align: middle; }
+  table.rel-table tr:nth-child(even) { background-color: #fffdf9; }
+
+  .box-meta-pessoal { flex: 1; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 1.1em; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+
+  /* POP-UP MODAIS */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(62, 39, 35, 0.85); display: none; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(4px); }
+  .modal-cgd { background: white; padding: 40px; border-radius: 16px; text-align: center; max-width: 450px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); border-top: 8px solid #ff9800; animation: popIn 0.3s ease-out; }
+  .modal-cgd i { font-size: 65px; color: #ff9800; margin-bottom: 20px; }
+  .modal-cgd h2 { margin: 0 0 15px 0; color: #d32f2f; font-size: 1.8em; }
+  .modal-cgd p { color: #333; margin-bottom: 25px; font-size: 1.2em; line-height: 1.4; font-weight: 500; }
+  .modal-cgd button { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 15px 35px; border-radius: 8px; font-size: 1.2em; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 12px rgba(245,124,0,0.3); }
+  .modal-cgd button:hover { transform: scale(1.03); box-shadow: 0 6px 15px rgba(245,124,0,0.45); }
+
+  @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+  .slide-container { text-align: center; }
+  .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin: 20px auto; border-radius: 12px; max-width: 860px; box-shadow: 0 8px 25px rgba(93, 64, 55, 0.15); border: 1px solid #d7ccc8; background: #3e2723; }
+  .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .alternativa { margin: 14px 0; display: flex; align-items: center; gap: 10px; font-size: 1em; text-align: left; background: #fffdf9; padding: 12px; border-radius: 8px; border: 1px solid #ffe0b2; }
+  .alternativa input { width: auto; margin: 0; }
+  .nav-arrows { display: flex; justify-content: center; gap: 50px; font-size: 40px; color: #ff9800; margin-top: 20px; }
+  .nav-arrows i { cursor: pointer; transition: 0.2s; }
+  .nav-arrows i:hover { color: #ffb300; transform: scale(1.2); }
+
+  .grid-ebooks { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 15px; }
+  .ebook-card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 25px; text-align: center; border-top: 5px solid #ff9800; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+  .ebook-card i { font-size: 45px; color: #ff9800; margin-bottom: 15px; }
+  table.chk-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 25px; }
+  table.chk-table th { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; padding: 12px 10px; text-align: left; }
+  table.chk-table td { padding: 12px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: middle; }
+  .chk-options-row { display: flex; gap: 15px; font-weight: bold; }
+  .chk-options-row label { display: flex; align-items: center; gap: 4px; cursor: pointer; margin: 0; }
+  .chk-options-row input { width: auto; margin: 0; }
+  .header-subsecao { background: #fff3e0; font-weight: bold; color: #e65100; padding: 8px 10px; border-left: 4px solid #ff9800; }
+  .progresso-container { background: #eee; border-radius: 10px; height: 22px; width: 100%; position: relative; margin: 20px 0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+  .progresso-barra { background: linear-gradient(90deg, #ffbc00, #ff9800); width: 0%; height: 100%; border-radius: 10px; transition: 0.4s ease; }
+  .progresso-texto { position: absolute; width: 100%; text-align: center; top: 0; left: 0; line-height: 22px; font-size: 0.85em; font-weight: bold; color: #333; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header-estagiario">
+    <div style="flex:1;">
+      <h1 style="margin:0; font-size:1.8em;" id="txtIdentidadeBoasVindas">Carregando...</h1>
+      <div class="info-grid">
+        <div><strong>Nome do estagiário:</strong> <span id="lblNome">Buscando dados...</span></div>
+        <div><strong>Tipo de Estágio:</strong> <span id="lblTipo">Buscando dados...</span></div>
+        <div><strong>Horário de Estágio:</strong> <span id="lblHorario">Buscando dados...</span></div>
+        <div><strong>Função:</strong> Estagiário(a)</div>
+      </div>
+    </div>
+    <button onclick="localStorage.removeItem('sessao_estagiario_nome'); localStorage.removeItem('sessao_usuario_papel'); google.script.run.withSuccessHandler(function(url) { window.open(url + '?page=Index', '_top'); }).getUrlApp()" style="background: linear-gradient(135deg, #ff5252, #c62828); color:white; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:bold; height:fit-content; margin-left:20px; box-shadow: 0 4px 10px rgba(244,67,54,0.3);"><i class="fas fa-sign-out-alt"></i> Sair</button>
+  </div>
+
+  <div id="dashboard" class="secao" style="display:block; background: transparent; padding: 0; box-shadow: none; border-top: none;">
+    <div class="welcome-box">
+      <p>Seja bem-vindo(a) ao Portal do Estagiário. Aqui você encontrará todas as ferramentas necessárias para acompanhar seu desenvolvimento, consultar materiais de apoio e registrar suas atividades durante o estágio.</p>
+    </div>
+
+    <div class="grid-menu">
+      <div class="card" style="border-top: 5px solid #ffc107;" onclick="abrirTrilha()">
+        <h3>📚 Trilha do Saber</h3><p>Acesse os treinamentos e videoaulas em alta resolução</p>
+      </div>
+      <div class="card" style="border-top: 5px solid #ff9800;" onclick="mostrarAbaGratificacoes('ligacoes')">
+        <h3>🏆 Controle de Gratificações</h3><p>Lançar ligações, materiais e cancelamentos</p>
+      </div>
+      <div class="card" style="border-top: 5px solid #f57c00;" onclick="abrirRelatoriosEstagiario()">
+        <h3>📊 Meus Relatórios</h3><p>Consulte seu histórico e feedbacks recebidos</p>
+      </div>
+      <div class="card" style="border-top: 5px solid #757575;" onclick="abrirGuiasEstagiario()">
+        <h3>📖 Guias e Manuais</h3><p>Consulte normas e manuais de apoio</p>
+      </div>
+      <div class="card" style="border-top: 5px solid #ff5722;" onclick="abrirChecklist()">
+        <h3>✅ Checklist do Estagiário</h3><p>Revise suas tarefas diárias obrigatórias</p>
+      </div>
+    </div>
+
+    <div class="painel-agenda" id="blocoAgendaCompares">
+      <h2 style="margin-top:0; color:#ff5722; font-size: 1.4em;"><i class="fas fa-calendar-alt"></i> Painel de AGENDAMENTOS</h2>
+      <p style="color:#666; margin:0 0 10px 0; font-size:0.95em;">Lembretes ativos ordenados por urgência. Confirme a presença abaixo para remover o card da tela.</p>
+      <div class="grid-agenda" id="conteinerCardsAgenda">
+         <p style="color:#999; text-align:center; width:100%; grid-column: 1 / -1;">Buscando agendamentos...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="gratificacoes" class="secao">
+    <h2>🏆 Controle de Gratificações (Mês Atual)</h2>
+    <p style="color:#555; margin-top:0; font-size:0.95em;">Estas métricas vão zerar automaticamente assim que você enviar o mês para a coordenação em "Meus Relatórios".</p>
+    
+    <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+      <div class="box-meta-pessoal" style="background:#fff3e0; color:#e65100; border:1px solid #ffcc80;">📞 Ligações Livres:<br><span id="metaLigacoes" style="font-size:1.5em;">0</span></div>
+      <div class="box-meta-pessoal" style="background:#ffebee; color:#c62828; border:1px solid #ef9a9a;">❌ Cancelamentos:<br><span id="metaCancelamentos" style="font-size:1.5em;">0</span></div>
+      <div class="box-meta-pessoal" style="background:#fffde7; color:#f57c00; border:1px solid #fff59d;">📦 Materiais:<br><span id="metaMateriais" style="font-size:1.5em;">0</span></div>
+    </div>
+
+    <div class="sub-menu">
+      <button id="btn-sub-lig" class="btn-sub active" onclick="alterarSubAba('ligacoes')">Ligações / Reposições</button>
+      <button id="btn-sub-can" class="btn-sub" onclick="alterarSubAba('cancelamentos')">Cancelamentos</button>
+      <button id="btn-sub-mat" class="btn-sub" onclick="alterarSubAba('materiais')">Materiais</button>
+    </div>
+
+    <div id="sub-ligacoes" class="sub-secao">
+      <div class="etapa-form active" id="lig-etapa1">
+        <label>Nome do Aluno(a):</label> <input type="text" id="l_nome">
+        <label>Matrícula:</label> <input type="text" id="l_mat">
+        <label>Data da Falta:</label> <input type="date" id="l_data_falta">
+        <button class="next-btn" onclick="avancarLigEtapa2()">Avançar para Meio de Comunicação ➔</button>
+      </div>
+
+      <div class="etapa-form" id="lig-etapa2">
+        <label>Meio de Comunicação Usado:</label>
+        <div class="btn-group-comunicacao">
+          <div class="btn-comunicacao" id="btnLigCall" onclick="selecionarMeioLig('Ligação')"><i class="fas fa-phone"></i> Ligação</div>
+          <div class="btn-comunicacao" id="btnLigMsg" onclick="selecionarMeioLig('Mensagem')"><i class="fab fa-whatsapp"></i> Mensagem</div>
+        </div>
+        
+        <div id="areaFluxoComunicaçãoLig" style="display:none;">
+          <label>Motivo da Falta:</label>
+          <select id="l_motivo" onchange="toggleMotivoOutrosLig(this.value)">
+            <option value="">Selecione...</option>
+            <option value="Doente">Doente</option><option value="Não quis vir">Não quis vir</option><option value="Viajando">Viajando</option>
+            <option value="Estava na escola">Estava na escola</option><option value="Falta de passagem">Falta de passagem</option><option value="Chuva">Chuva</option>
+            <option value="Quer cancelar o curso">Quer cancelar o curso</option><option value="Transporte">Transporte</option><option value="Outros (descreva)">Outros (descreva)</option>
+          </select>
+          
+          <div id="l_campo_outros" style="display:none; margin-bottom: 15px;">
+             <label>Descreva o Outro Motivo da Falta:</label>
+             <input type="text" id="l_motivo_outros" placeholder="Digite o motivo específico de forma clara">
+          </div>
+          
+          <label>Agendou reposição?</label>
+          <select id="l_agendou" onchange="toggleLoteReposicao(this.value)">
+            <option value="">Selecione...</option><option value="Sim">Sim</option><option value="Não">Não</option>
+          </select>
+
+          <div id="lig_sesson_sim" style="display:none; background:#fff3e0; padding:15px; border-radius:6px; margin:15px 0; border-left: 4px solid #ff9800;">
+            <h4 style="margin-top:0; color:#e65100;">Previsão de Retorno</h4>
+            <label>Data Esperada de Volta:</label> <input type="date" id="l_data_volta">
+            <label>Horário pré-estabelecido:</label>
+            <select id="l_hora_volta">
+              <option value="">Selecione...</option>
+              <option value="07:00 às 09:00">07:00 às 09:00</option><option value="09:00 às 11:00">09:00 às 11:00</option>
+              <option value="11:00 às 13:00">11:00 às 13:00</option><option value="13:00 às 15:00">13:00 às 15:00</option>
+              <option value="15:00 às 17:00">15:00 às 17:00</option><option value="17:00 às 19:00">17:00 às 19:00</option>
+            </select>
+          </div>
+
+          <div id="lig_sesson_nao" style="display:none; background:#ffebee; padding:15px; border-radius:6px; margin:15px 0; border-left: 4px solid #f44336;">
+            <label>Qual foi o motivo de não agendar a reposição do(a) aluno(a)?</label>
+            <textarea id="l_motivo_nao" placeholder="Descreva os motivos aqui..."></textarea>
+          </div>
+          <button class="action-btn" onclick="enviarFluxoLigacoes()">🚀 Registrar Ocorrência</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sub-cancelamentos" class="sub-secao" style="display:none;">
+      <label>Nome do Aluno(a):</label> <input type="text" id="c_nome">
+      <label>Matrícula:</label> <input type="text" id="c_mat">
+      <label>Data do Atendimento:</label> <input type="date" id="c_data_atend">
+      
+      <label>Meio de Comunicação Usado:</label>
+      <div class="btn-group-comunicacao">
+        <div class="btn-comunicacao" id="btnCanCall" onclick="selecionarMeioCan('Ligação')"><i class="fas fa-phone"></i> Ligação</div>
+        <div class="btn-comunicacao" id="btnCanMsg" onclick="selecionarMeioCan('Mensagem')"><i class="fab fa-whatsapp"></i> Mensagem</div>
+      </div>
+
+      <label>Qual foi o motivo dado para cancelamento:</label>
+      <select id="c_motivo" onchange="toggleMotivoOutrosCan(this.value)">
+        <option value="">Selecione...</option>
+        <option value="Financeiro">Financeiro</option><option value="Transporte">Transporte</option>
+        <option value="Mudança">Mudança</option><option value="Outros">Outros</option>
+      </select>
+      <div id="c_campo_outros" style="display:none;"><label>Descreva o Outro Motivo:</label> <input type="text" id="c_motivo_outros"></div>
+
+      <label>Agendou para vir cancelar?</label>
+      <select id="c_agendou" onchange="toggleAgendaCancelamento(this.value)">
+        <option value="">Selecione...</option><option value="Sim">SIM</option><option value="Não">NÃO</option>
+      </select>
+
+      <div id="c_sessao_sim" style="display:none; background:#fff3e0; padding:15px; border-radius:6px; margin:15px 0; border-left: 4px solid #ff9800;">
+        <label>Qual a data exata que você deixou agendada?</label>
+        <input type="date" id="c_data_agend">
+        
+        <label>Qual o horário agendado?</label>
+        <select id="c_hora_agend">
+          <option value="">Selecione...</option>
+          <option value="10:00">10:00</option><option value="10:30">10:30</option><option value="11:00">11:00</option><option value="11:30">11:30</option><option value="12:00">12:00</option>
+          <option value="14:00">14:00</option><option value="14:30">14:30</option><option value="15:00">15:00</option><option value="15:30">15:30</option><option value="16:00">16:00</option>
+        </select>
+      </div>
+
+      <div id="c_sessao_nao" style="display:none; background:#f5f5f5; padding:15px; border-radius:6px; margin:15px 0; border-left: 4px solid #757575;">
+        <label>Informe o Motivo de não realizar o agendamento:</label>
+        <textarea id="c_motivo_nao_agend" placeholder="Descreva os detalhes aqui..."></textarea>
+      </div>
+      <button class="action-btn" style="background: linear-gradient(135deg, #ff9800, #f57c00);" onclick="enviarFluxoCancelamento()">🚀 Registrar Cancelamento</button>
+    </div>
+
+    <div id="sub-materiais" class="sub-secao" style="display:none;">
+      <label>Nome:</label> <input type="text" id="m_nome">
+      <label>Matrícula:</label> <input type="text" id="m_mat">
+      <label>Data de Lançamento:</label> <input type="date" id="m_data" onchange="calcularProximaTentativaMaterial(this.value)">
+      <label>Data da Próxima Tentativa (+1 Mês Automático):</label> 
+      <input type="text" id="m_proxima" readonly style="background:#f5f5f5; font-weight:bold; color:#e65100;">
+
+      <button class="action-btn" style="background: linear-gradient(135deg, #ffb300, #ff9800);" onclick="enviarFluxoMateriais()">🚀 Registrar Materiais</button>
+    </div>
+
+    <button class="back-btn" onclick="mostrar('dashboard')">Voltar ao Painel Principal</button>
+  </div>
+
+  <div id="secao-relatorios" class="secao">
+    <div style="display: flex; gap: 15px; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h2 style="margin:0;">📊 Meus Relatórios</h2>
+      <button onclick="solicitarFechamentoMensalOperacional()" style="background: linear-gradient(135deg, #ff5722, #d84315); color:white; border:none; padding:12px 20px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.95em; box-shadow: 0 4px 10px rgba(244,87,34,0.3);"><i class="fas fa-lock"></i> Lançar Gratificações do Mês</button>
+    </div>
+    <p style="color:#666; margin: 0 0 20px 0;">Lance o seu mês e a tabela principal será limpa para o mês seguinte. Confira a aba de Feedback abaixo para ver suas aprovações corporativas.</p>
+    
+    <div style="background:#f5f5f5; padding:15px; border-radius:8px; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:20px; border: 1px solid #e0e0e0;">
+      <div><label>Filtrar por Dia Exato (Formato DD/MM/AAAA):</label> <input type="text" id="f_dia" placeholder="Ex: 30/06/2026" oninput="filtrarTabelaRelatoriosLocal()"></div>
+      <div>
+        <label>Filtrar por Mês:</label>
+        <select id="f_mes" onchange="filtrarTabelaRelatoriosLocal()">
+          <option value="">Todos os meses</option>
+          <option value="/01/">Janeiro</option><option value="/02/">Fevereiro</option><option value="/03/">Março</option><option value="/04/">Abril</option><option value="/05/">Maio</option><option value="/06/">Junho</option><option value="/07/">Julho</option><option value="/08/">Agosto</option><option value="/09/">Setembro</option><option value="/10/">Outubro</option><option value="/11/">Novembro</option><option value="/12/">Dezembro</option>
+        </select>
+      </div>
+      <div>
+        <label>Filtrar por Horário:</label>
+        <select id="f_hora" onchange="filtrarTabelaRelatoriosLocal()">
+          <option value="">Todos os horários</option>
+          <option value="07:00">07:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option>
+        </select>
+      </div>
+    </div>
+
+    <h3 style="color:#ff9800; margin-top:30px;"><i class="fas fa-list"></i> Lançamentos Ativos (Mês Corrente)</h3>
+    <div style="overflow-x:auto; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 5px; margin-bottom:40px;">
+      <table class="rel-table" id="tabelaAbertos"></table>
+    </div>
+
+    <h3 style="color:#212121; margin-top:20px; border-top: 1px solid #eee; padding-top:20px;"><i class="fas fa-envelope-open-text"></i> Retorno FeedBack Institucional (Meses Fechados)</h3>
+    <p style="font-size:0.9em; color:#666;">Aqui ficam salvos apenas os lançamentos que você já enviou e a Coordenação já analisou/faturou.</p>
+    <div style="overflow-x:auto; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 5px;">
+      <table class="rel-table" id="tabelaFeedbacks"></table>
+    </div>
+
+    <button class="back-btn" onclick="mostrar('dashboard')">Voltar ao Painel Principal</button>
+  </div>
+
+  <div class="modal-overlay" id="modalCGD">
+    <div class="modal-cgd">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h2>Gere Ocorrência no CGD!</h2>
+      <p>A atividade foi salva com êxito nas suas metas operacionais.<br><br><strong>Atenção: Entre no sistema corporativo agora e emita a ocorrência regulamentar!</strong></p>
+      <button onclick="fecharModalCGD()">Entendido, vou gerar agora</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalChecklistSucesso">
+    <div class="modal-cgd" style="border-top: 8px solid #4CAF50;">
+      <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+      <h2>Checklist Preenchido!</h2>
+      <p>Parabéns, Checklist preenchido!<br><br><strong>Favor chamar o Supervisor de Estágio para Validação.</strong></p>
+      <button onclick="fecharModalChecklistSucesso()" style="background: #4CAF50;">Entendido</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalAlertaGeral">
+    <div class="modal-cgd" id="modalAlertaGeralCard" style="border-top: 8px solid #f44336;">
+      <i class="fas fa-exclamation-triangle" id="modalAlertaGeralIcon" style="color: #f44336;"></i>
+      <h2 id="modalAlertaGeralTitulo" style="color: #212121;">Aviso do Sistema</h2>
+      <p id="modalAlertaGeralTexto"></p>
+      <button id="modalAlertaGeralBtn" onclick="fecharAlertaGeral()" style="background: linear-gradient(135deg, #ff9800, #f57c00);">Fechar</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalConfirmacaoGeral">
+    <div class="modal-cgd" style="border-top: 8px solid #ffba08; max-width: 480px;">
+      <i class="fas fa-question-circle" style="color: #ffba08;"></i>
+      <h2 style="color: #212121;">Confirmação</h2>
+      <p id="modalConfirmacaoGeralTexto"></p>
+      <div style="display: flex; gap: 15px; margin-top: 20px;">
+        <button id="modalConfirmacaoGeralBtnSim" style="background: linear-gradient(135deg, #4CAF50, #388E3C); flex: 1; padding: 12px; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Sim, Continuar</button>
+        <button onclick="fecharConfirmacaoGeral()" style="background: #757575; flex: 1; padding: 12px; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="trilha" class="secao">
+    <h2>📚 Trilha do Saber – Treinamento para o Estágio</h2>
+    <div id="indicadorGlobalTrilha" style="font-weight:bold; color:#ff9800; margin-bottom:15px; font-size:1.05em;"></div>
+    <div id="slideContent" class="slide-container">Buscando conteúdo estruturado...</div>
+    <div class="nav-arrows"><i class="fas fa-circle-left" onclick="mudarSlide(-1)"></i><i class="fas fa-circle-right" onclick="mudarSlide(1)"></i></div>
+    <button class="back-btn" onclick="mostrar('dashboard')">Voltar ao Portal Principal</button>
+  </div>
+
+  <div id="guiasManuais" class="secao">
+    <h2>📖 Guias e Manuais do Estágio</h2>
+    <div id="gridEbooksEstagiario" class="grid-ebooks">Acessando biblioteca virtual...</div>
+    <button class="back-btn" onclick="mostrar('dashboard')">Voltar ao Painel Principal</button>
+  </div>
+
+  <div id="checklistEst" class="secao">
+    <h2>✅ Checklist do Estagiário</h2>
+    <div id="bloqueioChecklistAviso" style="display:none; background:#ffe082; color:#333; padding:20px; border-radius:10px; font-weight:bold; text-align:center; border: 1px solid #ffb300;">
+      ⚠️ Impedimento de Conformidade: Você já preencheu e enviou o seu checklist diário hoje de forma correta!
+    </div>
+    <div id="areaAtivaChecklist">
+      <div class="progresso-container"><div id="barraFator" class="progresso-barra"></div><div id="textoFator" class="progresso-texto">0% Preenchido</div></div>
+      <table class="chk-table" id="tabelaChecklistEst"></table>
+      <div style="background: #fff3e0; padding: 25px; border-radius: 12px; margin-top: 25px; border: 1px solid #ffcc80;">
+        <h3 style="margin-top:0; color:#e65100;">Validação do Supervisor</h3>
+        <label>Senha do Supervisor de Estágio:</label><input type="password" id="senhaSup" placeholder="Digite a credencial corporativa">
+        <button class="action-btn" style="background: linear-gradient(135deg, #ff9800, #f57c00);" onclick="enviarChecklistFim()">Validar e Enviar Checklist</button>
+      </div>
+    </div>
+    <button class="back-btn" onclick="mostrar('dashboard')">Voltar ao Painel Principal</button>
+  </div>
+
+</div>
+
+<script>
+  var ESTAGIARIO_LOGADO = "<?= nomeUsuario ?>" || "Estagiário de Educação";
+  var cacheRelatoriosRaw = [];
+  var meioComunicacaoSelecionadoLig = "";
+  var meioComunicacaoSelecionadoCan = "";
+  
+  // FUNÇÕES AUXILIARES DE MODAL ESTILO CGD
+  function exibirAlertaGeral(texto, titulo, icone, corBorda) {
+    document.getElementById('modalAlertaGeralTexto').innerHTML = texto;
+    document.getElementById('modalAlertaGeralTitulo').innerText = titulo || "Aviso do Sistema";
+    var icoEl = document.getElementById('modalAlertaGeralIcon');
+    icoEl.className = "fas " + (icone || "fa-exclamation-triangle");
+    icoEl.style.color = corBorda || "#f44336";
+    document.getElementById('modalAlertaGeralCard').style.borderTopColor = corBorda || "#f44336";
+    document.getElementById('modalAlertaGeral').style.display = 'flex';
+  }
+  function fecharAlertaGeral() { document.getElementById('modalAlertaGeral').style.display = 'none'; }
+  
+  var callbackConfirmacaoGeral = null;
+  function exibirConfirmacaoGeral(texto, callback) {
+    document.getElementById('modalConfirmacaoGeralTexto').innerText = texto;
+    callbackConfirmacaoGeral = callback;
+    document.getElementById('modalConfirmacaoGeral').style.display = 'flex';
+  }
+  function fecharConfirmacaoGeral() { document.getElementById('modalConfirmacaoGeral').style.display = 'none'; }
+  document.getElementById('modalConfirmacaoGeralBtnSim').onclick = function() {
+    fecharConfirmacaoGeral();
+    if(callbackConfirmacaoGeral) callbackConfirmacaoGeral();
+  };
+
+  window.addEventListener("load", function() {
+    localStorage.setItem("sessao_usuario_papel", "Estagiario");
+    if (!ESTAGIARIO_LOGADO || ESTAGIARIO_LOGADO.indexOf("nomeUsuario") > -1 || ESTAGIARIO_LOGADO === "Estagiário de Educação") {
+       var cacheNome = localStorage.getItem("sessao_estagiario_nome");
+       if (cacheNome) { ESTAGIARIO_LOGADO = cacheNome; }
+    } else {
+       localStorage.setItem("sessao_estagiario_nome", ESTAGIARIO_LOGADO);
+    }
+
+    var horaAtual = new Date().getHours();
+    var cumprimento = "boa noite";
+    if (horaAtual >= 5 && horaAtual < 12) cumprimento = "bom dia";
+    else if (horaAtual >= 12 && horaAtual < 18) cumprimento = "boa tarde";
+
+    document.getElementById("txtIdentidadeBoasVindas").innerText = "Olá " + ESTAGIARIO_LOGADO + ", " + cumprimento + "!";
+    document.getElementById("lblNome").innerText = ESTAGIARIO_LOGADO;
+    
+    google.script.run.withSuccessHandler(function(dados) {
+      document.getElementById("lblTipo").innerText = dados.tipo || "Não cadastrado";
+      document.getElementById("lblHorario").innerText = dados.horario || "Não cadastrado";
+    }).getDadosEstagiario(ESTAGIARIO_LOGADO);
+
+    carregarPainelAgendaReminders();
+  });
+
+  function mostrar(id) {
+    var secoes = document.querySelectorAll('.secao');
+    for(var i = 0; i < secoes.length; i++) { secoes[i].style.display = 'none'; }
+    document.getElementById(id).style.display = 'block';
+    if(id === 'dashboard') carregarPainelAgendaReminders();
+  }
+
+  function mostrarModalCGD() { document.getElementById('modalCGD').style.display = 'flex'; }
+  function fecharModalCGD() { document.getElementById('modalCGD').style.display = 'none'; }
+  function mostrarModalChecklistSucesso() { document.getElementById('modalChecklistSucesso').style.display = 'flex'; }
+  function fecharModalChecklistSucesso() { document.getElementById('modalChecklistSucesso').style.display = 'none'; }
+
+  function resetarFormulariosFluxo() {
+    var inputs = document.querySelectorAll('#gratificacoes input, #gratificacoes textarea');
+    for(var i=0; i<inputs.length; i++) inputs[i].value = '';
+    var selects = document.querySelectorAll('#gratificacoes select');
+    for(var j=0; j<selects.length; j++) selects[j].selectedIndex = 0;
+    
+    document.getElementById('lig-etapa1').classList.add('active');
+    document.getElementById('lig-etapa2').classList.remove('active');
+    document.getElementById('areaFluxoComunicaçãoLig').style.display = 'none';
+    document.getElementById('lig_sesson_sim').style.display = 'none';
+    document.getElementById('lig_sesson_nao').style.display = 'none';
+    document.getElementById('l_campo_outros').style.display = 'none';
+    
+    var btnLig = document.querySelectorAll('#lig-etapa2 .btn-comunicacao');
+    for(var k=0; k<btnLig.length; k++) btnLig[k].classList.remove('selected');
+    meioComunicacaoSelecionadoLig = "";
+    document.getElementById('c_campo_outros').style.display = 'none';
+    document.getElementById('c_sessao_sim').style.display = 'none';
+    document.getElementById('c_sessao_nao').style.display = 'none';
+    
+    var btnCan = document.querySelectorAll('#sub-cancelamentos .btn-comunicacao');
+    for(var m=0; m<btnCan.length; m++) btnCan[m].classList.remove('selected');
+    meioComunicacaoSelecionadoCan = "";
+  }
+
+  function carregarPainelAgendaReminders() {
+    google.script.run.withSuccessHandler(function(lista) {
+      var conteiner = document.getElementById('conteinerCardsAgenda');
+      if(!lista || lista.length === 0) {
+        conteiner.innerHTML = '<p style="color:#999; text-align:center; width:100%; grid-column: 1 / -1; font-weight:bold; padding: 20px 0;">Nenhum agendamento pendente no momento.</p>';
+        return;
+      }
+      lista.sort(function(a, b) {
+          var extraiHora = function(h) { if(!h || h==='N/A') return '99:99'; return String(h).split(' ')[0]; };
+          var normData = function(d) {
+              var s = String(d).split('T')[0];
+              if(s.indexOf('/') > -1) { var p = s.split('/'); if(p[2].length === 4) return p[2] + '-' + p[1] + '-' + p[0]; }
+              return s;
+          };
+          return (normData(a.expectativaVolta) + " " + extraiHora(a.horarioVolta)).localeCompare(normData(b.expectativaVolta) + " " + extraiHora(b.horarioVolta));
+      });
+      conteiner.innerHTML = '';
+      for(var i=0; i<lista.length; i++) {
+        var card = lista[i];
+        var df = String(card.dataFalta);
+        if(df.indexOf('T') > -1) df = df.split('T')[0].split('-').reverse().join('/');
+        else if(df.indexOf('-') > -1 && df.indexOf('/') === -1 && /^\d{4}-\d{2}-\d{2}$/.test(df)) df = df.split('-').reverse().join('/');
+        var dv = String(card.expectativaVolta);
+        if(dv.indexOf('T') > -1) dv = dv.split('T')[0].split('-').reverse().join('/');
+        else if(dv.indexOf('-') > -1 && dv.indexOf('/') === -1 && /^\d{4}-\d{2}-\d{2}$/.test(dv)) dv = dv.split('-').reverse().join('/');
+
+        var tagTipo = card.tipoReg === 'Cancelamento' ? '<span style="background:#ffcdd2; color:#c62828; padding:3px 6px; border-radius:4px; font-size:0.8em; margin-left:10px; font-weight:bold;">Cancelamento</span>' : '<span style="background:#fff3e0; color:#e65100; padding:3px 6px; border-radius:4px; font-size:0.8em; margin-left:10px; font-weight:bold;">Ligação</span>';
+        var alertAtrasado = card.atrasado ? '<div style="background:#ff9800; color:white; padding:5px; border-radius:4px; font-size:0.85em; font-weight:bold; margin-bottom:10px; text-align:center;"><i class="fas fa-exclamation-triangle"></i> ATENÇÃO: AGENDAMENTO DE MÊS ANTERIOR!</div>' : '';
+
+        conteiner.innerHTML += '<div class="card-agenda">' + alertAtrasado + '<p><strong>Nome:</strong> ' + card.aluno + ' ' + tagTipo + '</p>' + '<p><strong>Ocorrência:</strong> ' + df + '</p>' + '<p style="color:#e65100; font-weight:bold;"><i class="fas fa-clock"></i> Agendado para: ' + dv + ' às ' + card.horarioVolta + '</p>' + '<div class="btn-agenda-container">' + '<button class="btn-comp" onclick="marcarPresencaAgenda(this, ' + card.indexLinha + ', \'Sim\')">Compareceu</button>' + '<button class="btn-ncomp" onclick="marcarPresencaAgenda(this, ' + card.indexLinha + ', \'Não\')">Não Compareceu</button>' + '</div>' + '</div>';
+      }
+    }).carregarReposicoesPendentes(ESTAGIARIO_LOGADO);
+  }
+
+  function marcarPresencaAgenda(botao, linha, status) {
+    botao.parentElement.parentElement.style.display = 'none';
+    google.script.run.withSuccessHandler(function() { carregarPainelAgendaReminders(); }).atualizarStatusCompareceu(linha, status);
+  }
+
+  function atualizarMinhasMetricas() {
+    google.script.run.withSuccessHandler(function(stats) {
+      document.getElementById('metaLigacoes').innerText = stats.ligacoes;
+      document.getElementById('metaCancelamentos').innerText = stats.cancelamentos;
+      document.getElementById('metaMateriais').innerText = stats.materiais;
+    }).carregarMetricasIndividuais(ESTAGIARIO_LOGADO);
+  }
+
+  function mostrarAbaGratificacoes(subAba) { mostrar('gratificacoes'); alterarSubAba(subAba); atualizarMinhasMetricas(); }
+
+  function alterarSubAba(subAba) {
+    var subSecoes = document.querySelectorAll('.sub-secao');
+    for(var i=0; i<subSecoes.length; i++) subSecoes[i].style.display = 'none';
+    var botoes = document.querySelectorAll('.btn-sub');
+    for(var j=0; j<botoes.length; j++) botoes[j].classList.remove('active');
+    
+    document.getElementById('sub-' + subAba).style.display = 'block';
+    document.getElementById('btn-sub-' + subAba.substring(0,3)).classList.add('active');
+    resetarFormulariosFluxo();
+  }
+
+  function avancarLigEtapa2() {
+    var nome = document.getElementById('l_nome').value;
+    var mat = document.getElementById('l_mat').value;
+    var data = document.getElementById('l_data_falta').value;
+    if(!nome || !mat || !data) return exibirAlertaGeral("Por favor, insira o Nome, a Matrícula e a Data da Falta para continuar.", "Campos Incompletos");
+    document.getElementById('lig-etapa1').classList.remove('active');
+    document.getElementById('lig-etapa2').classList.add('active');
+  }
+
+  function selecionarMeioLig(meio) {
+    meioComunicacaoSelecionadoLig = meio;
+    document.getElementById('btnLigCall').classList.remove('selected');
+    document.getElementById('btnLigMsg').classList.remove('selected');
+    if(meio === 'Ligação') document.getElementById('btnLigCall').classList.add('selected');
+    else document.getElementById('btnLigMsg').classList.add('selected');
+    document.getElementById('areaFluxoComunicaçãoLig').style.display = 'block';
+  }
+
+  function toggleLoteReposicao(val) {
+    document.getElementById('lig_sesson_sim').style.display = (val === 'Sim') ? 'block' : 'none';
+    document.getElementById('lig_sesson_nao').style.display = (val === 'Não') ? 'block' : 'none';
+  }
+  function toggleMotivoOutrosLig(val) { document.getElementById('l_campo_outros').style.display = (val === 'Outros (descreva)') ? 'block' : 'none'; }
+
+  function enviarFluxoLigacoes() {
+    var agendou = document.getElementById('l_agendou').value;
+    if(!agendou) return exibirAlertaGeral("Por favor, selecione se a reposição foi agendada.", "Informação Pendente");
+
+    var motivoFinal = document.getElementById('l_motivo').value;
+    if(motivoFinal === 'Outros (descreva)') { motivoFinal = "Outros: " + document.getElementById('l_motivo_outros').value; }
+
+    var dados = {
+      tipo: 'Ligações e Reposições', aluno: document.getElementById('l_nome').value,
+      matricula: document.getElementById('l_mat').value, dataOcorrencia: document.getElementById('l_data_falta').value,
+      meioComunicacao: meioComunicacaoSelecionadoLig, motivo: motivoFinal,
+      agendou: agendou, previsaoRetorno: (agendou === 'Sim') ? document.getElementById('l_data_volta').value : 'N/A',
+      horario: (agendou === 'Sim') ? document.getElementById('l_hora_volta').value : 'N/A',
+      detalhes: (agendou === 'Não') ? document.getElementById('l_motivo_nao').value : 'N/A',
+      estagiario: ESTAGIARIO_LOGADO, compareceu: (agendou === 'Sim') ? 'Pendente' : 'Não se aplica'
+    };
+
+    google.script.run.withSuccessHandler(function(res) {
+      if(res && res.indexOf('Erro') > -1) { exibirAlertaGeral(res, "Erro Cadastral", "fa-times-circle", "#f44336"); return; }
+      resetarFormulariosFluxo(); atualizarMinhasMetricas(); carregarPainelAgendaReminders(); mostrarModalCGD();
+    }).salvarDados(dados);
+  }
+
+  function selecionarMeioCan(meio) {
+    meioComunicacaoSelecionadoCan = meio;
+    document.getElementById('btnCanCall').classList.remove('selected');
+    document.getElementById('btnCanMsg').classList.remove('selected');
+    if(meio === 'Ligação') document.getElementById('btnCanCall').classList.add('selected');
+    else document.getElementById('btnCanMsg').classList.add('selected');
+  }
+  function toggleMotivoOutrosCan(val) { document.getElementById('c_campo_outros').style.display = (val === 'Outros') ? 'block' : 'none'; }
+  function toggleAgendaCancelamento(val) {
+    document.getElementById('c_sessao_sim').style.display = (val === 'Sim') ? 'block' : 'none';
+    document.getElementById('c_sessao_nao').style.display = (val === 'Não') ? 'block' : 'none';
+  }
+
+  function enviarFluxoCancelamento() {
+    var nome = document.getElementById('c_nome').value, mat = document.getElementById('c_mat').value, dateAtend = document.getElementById('c_data_atend').value, agendou = document.getElementById('c_agendou').value;
+    if(!nome || !mat || !dateAtend || !meioComunicacaoSelecionadoCan || !agendou) return exibirAlertaGeral("Por favor, preencha todos os campos de cancelamento.", "Formulário Incompleto");
+
+    var motivoFinal = document.getElementById('c_motivo').value;
+    if(motivoFinal === 'Outros') motivoFinal = "Outros: " + document.getElementById('c_motivo_outros').value;
+
+    var dados = {
+      tipo: 'Cancelamento', aluno: nome, matricula: mat, dataOcorrencia: dateAtend,
+      meioComunicacao: meioComunicacaoSelecionadoCan, motivo: motivoFinal, agendou: agendou,
+      previsaoRetorno: (agendou === 'Sim') ? document.getElementById('c_data_agend').value : 'N/A',
+      horario: (agendou === 'Sim') ? document.getElementById('c_hora_agend').value : 'N/A',
+      detalhes: (agendou === 'Não') ? document.getElementById('c_motivo_nao_agend').value : 'N/A',
+      estagiario: ESTAGIARIO_LOGADO, compareceu: (agendou === 'Sim') ? 'Pendente' : 'Não se aplica'
+    };
+
+    google.script.run.withSuccessHandler(function(res) {
+      if(res && res.indexOf('Erro') > -1) { exibirAlertaGeral(res, "Erro Cadastral", "fa-times-circle", "#f44336"); return; }
+      resetarFormulariosFluxo(); atualizarMinhasMetricas(); carregarPainelAgendaReminders(); mostrarModalCGD();
+    }).salvarDados(dados);
+  }
+
+  function calcularProximaTentativaMaterial(dataVal) {
+    if(!dataVal) return;
+    var d = new Date(dataVal + 'T00:00:00');
+    d.setMonth(d.getMonth() + 1);
+    document.getElementById('m_proxima').value = d.toLocaleDateString('pt-BR');
+  }
+
+  function enviarFluxoMateriais() {
+    var nome = document.getElementById('m_nome').value, mat = document.getElementById('m_mat').value, data = document.getElementById('m_data').value;
+    if(!nome || !mat || !data) return exibirAlertaGeral("Preencha todos os campos da ficha de materiais.", "Falta Informações");
+
+    var dados = {
+      tipo: 'Materiais', aluno: nome, matricula: mat, dataOcorrencia: data,
+      meioComunicacao: 'N/A', motivo: 'Entrega/Análise de Material', agendou: 'N/A', previsaoRetorno: 'N/A', horario: 'N/A',
+      detalhes: "Próxima tentativa agendada para: " + document.getElementById('m_proxima').value,
+      estagiario: ESTAGIARIO_LOGADO, compareceu: 'Não se aplica'
+    };
+
+    google.script.run.withSuccessHandler(function(res) {
+      if(res && res.indexOf('Erro') > -1) { exibirAlertaGeral(res, "Erro Cadastral", "fa-times-circle", "#f44336"); return; }
+      resetarFormulariosFluxo(); atualizarMinhasMetricas(); mostrarModalCGD();
+    }).salvarDados(dados);
+  }
+
+  function deletarRegistroRelatorio(linhaExcel) {
+    exibirConfirmacaoGeral("⚠️ Tem certeza que deseja EXCLUIR este registro?", function() {
+      document.getElementById('tabelaAbertos').innerHTML = "<tr><td colspan='9' style='text-align:center;'>Removendo...</td></tr>";
+      google.script.run.withSuccessHandler(function() {
+         abrirRelatoriosEstagiario(); carregarPainelAgendaReminders(); atualizarMinhasMetricas();
+      }).deletarRegistroDaPlanilha(linhaExcel);
+    });
+  }
+
+  function solicitarFechamentoMensalOperacional() {
+    var fMes = document.getElementById('f_mes').value;
+    var mesAnoAlvo = "";
+    var hj = new Date();
+    var mStr = ("0" + (hj.getMonth() + 1)).slice(-2);
+    var aStr = hj.getFullYear();
+    mesAnoAlvo = mStr + "/" + aStr;
+    if(fMes) { mesAnoAlvo = fMes.replace(/\//g, "") + "/" + aStr; }
+    
+    var pendentesRestantes = 0;
+    for(var i = 0; i < cacheRelatoriosRaw.length; i++) {
+       var row = cacheRelatoriosRaw[i];
+       var dBase = formatarParaBR(row[4]);
+       var mBase = (dBase && dBase.length === 10) ? dBase.substring(3) : "";
+       if (!row[15] && String(row[7]).trim() === 'Sim' && String(row[12]).trim() === 'Pendente' && mBase === mesAnoAlvo) {
+           pendentesRestantes++;
+       }
+    }
+
+    if (pendentesRestantes > 0) {
+        exibirAlertaGeral("⚠️ AÇÃO BLOQUEADA:<br><br>Você possui " + pendentesRestantes + " agendamento(s) pendente(s) no período de " + mesAnoAlvo + ". Vá ao 'Painel de Agendamentos' e confirme a presença dos alunos primeiro.", "Pendências Encontradas", "fa-lock", "#f44336");
+        return;
+    }
+    
+    exibirConfirmacaoGeral("Deseja fechar e enviar a produção operacional do período " + mesAnoAlvo + "?\nSua tela será limpa para o próximo mês.", function() {
+      google.script.run.withSuccessHandler(function() {
+         exibirAlertaGeral("Mês operacional fechado e enviado com sucesso!", "Envio Concluído", "fa-check-circle", "#4CAF50");
+         abrirRelatoriosEstagiario(); carregarPainelAgendaReminders(); atualizarMinhasMetricas();
+      }).fecharMesEstagiario(ESTAGIARIO_LOGADO, mesAnoAlvo);
+    });
+  }
+
+  function abrirRelatoriosEstagiario() {
+    mostrar('secao-relatorios');
+    document.getElementById('tabelaAbertos').innerHTML = "<tr><td colspan='9'>Carregando lançamentos...</td></tr>";
+    document.getElementById('tabelaFeedbacks').innerHTML = "<tr><td colspan='9'>Carregando feedbacks...</td></tr>";
+    google.script.run.withSuccessHandler(function(dadosBase) {
+      cacheRelatoriosRaw = dadosBase.filter(function(r) { return r[11] === ESTAGIARIO_LOGADO; });
+      filtrarTabelaRelatoriosLocal();
+    }).carregarRegistros();
+  }
+
+  function formatarParaBR(dataStr) {
+    if(!dataStr || dataStr === 'N/A') return '-';
+    var limpa = String(dataStr).split(' ')[0];
+    if(limpa.indexOf('T') > -1) limpa = limpa.split('T')[0];
+    if(limpa.indexOf('-') > -1) { var p = limpa.split('-'); if(p[0].length === 4) return p[2] + '/' + p[1] + '/' + p[0]; }
+    return limpa; 
+  }
+
+  function filtrarTabelaRelatoriosLocal() {
+    var fDia = document.getElementById('f_dia').value;
+    var fMes = document.getElementById('f_mes').value;
+    var fHora = document.getElementById('f_hora').value;
+
+    var htmlAbertos = '<tr><th>Data</th><th>Aluno</th><th>Matrícula</th><th>Tipo</th><th>Agendamento</th><th>Horário</th><th>Presença</th><th>Ação</th></tr>';
+    var htmlFechados = '<tr><th>Data</th><th>Aluno</th><th>Tipo</th><th>Status (Presença)</th><th>Retorno (Faturamento)</th></tr>';
+    var linesFiltradas = [];
+
+    for(var i=0; i<cacheRelatoriosRaw.length; i++) {
+       var r = cacheRelatoriosRaw[i];
+       r.dataBaseBR = formatarParaBR(r[4]); r.dataVoltaBR = formatarParaBR(r[8]);
+       linesFiltradas.push(r);
+    }
+
+    if (fDia) { linesFiltradas = linesFiltradas.filter(function(r) { return r.dataBaseBR.indexOf(fDia) > -1; }); }
+    if (fMes) { linesFiltradas = linesFiltradas.filter(function(r) { return r.dataBaseBR.indexOf(fMes) > -1; }); }
+    if (fHora) { linesFiltradas = linesFiltradas.filter(function(r) { return String(r[9]).indexOf(fHora) > -1; }); }
+
+    var temAberto = false, temFechado = false;
+    linesFiltradas.reverse().forEach(function(row) {
+        var isFechado = row[15], statusPresenca = row[12];
+        if(statusPresenca === 'Pendente') statusPresenca = '<span style="color:#ff9800; font-weight:bold;">⏳ Pendente</span>';
+        else if(statusPresenca === 'Sim' || statusPresenca === '✅ Compareceu' || statusPresenca === '✅ Sim') statusPresenca = '<span style="color:#4CAF50; font-weight:bold;">✅ Sim</span>';
+        else if(statusPresenca === 'Não' || statusPresenca === '❌ Faltou' || statusPresenca === '❌ Não') statusPresenca = '<span style="color:#f44336; font-weight:bold;">❌ Não</span>';
+
+        var tipoBadge = '<span style="background:#fff3e0; color:#e65100; padding:4px 8px; border-radius:4px; font-size:0.85em; font-weight:bold; border: 1px solid #ffcc80;">' + row[1] + '</span>';
+
+        if(isFechado) {
+            var statusFeedback = row[13] || 'Pendente';
+            if(statusFeedback === 'Pendente') statusFeedback = '<span style="color:#757575; font-weight:bold;"><i class="fas fa-clock"></i> Em Análise</span>';
+            else if(statusFeedback === 'Faturado' || statusFeedback === 'Faturado (Aprovado)') statusFeedback = '<span style="color:#2e7d32; font-weight:bold;"><i class="fas fa-check-double"></i> Aprovado</span>';
+            else if(statusFeedback === 'Não Faturado') statusFeedback = '<span style="color:#c62828; font-weight:bold;"><i class="fas fa-times-circle"></i> Rejeitado</span>';
+
+            htmlFechados += '<tr><td>' + row.dataBaseBR + '</td><td><strong>' + row[2] + '</strong></td><td>' + tipoBadge + '</td><td><strong>' + statusPresenca + '</strong></td><td><strong>' + statusFeedback + '</strong></td></tr>';
+            temFechado = true;
+        } else {
+            var hor = (String(row[9]) === 'N/A' || !row[9]) ? '-' : String(row[9]);
+            htmlAbertos += '<tr><td>' + row.dataBaseBR + '</td><td><strong>' + row[2] + '</strong></td><td>' + row[3] + '</td><td>' + tipoBadge + '</td><td>' + row.dataVoltaBR + '</td><td>' + hor + '</td><td><strong>' + statusPresenca + '</strong></td><td style="text-align:center;"><button onclick="deletarRegistroRelatorio(' + row[14] + ')" style="background:#f44336; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;"><i class="fas fa-trash-alt"></i></button></td></tr>';
+            temAberto = true;
+        }
+    });
+
+    if(!temAberto) htmlAbertos += '<tr><td colspan="8" style="text-align:center; color:#999; padding:20px;">Nenhum lançamento ativo neste mês. Tudo enviado ou limpo!</td></tr>';
+    if(!temFechado) htmlFechados += '<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">Nenhum histórico arquivado. Envie o fechamento para processar feedbacks.</td></tr>';
+    document.getElementById('tabelaAbertos').innerHTML = htmlAbertos;
+    document.getElementById('tabelaFeedbacks').innerHTML = htmlFechados;
+  }
+
+  var treinos = []; var currentSlide = 0; var subStep = 0; 
+  function abrirTrilha() {
+    mostrar('trilha'); document.getElementById('slideContent').innerHTML = '<p>Buscando capacitações...</p>';
+    google.script.run.withSuccessHandler(function(data) { treinos = data; currentSlide = 0; subStep = 0; renderSlide(); }).carregarTreinamentos();
+  }
+
+  function renderSlide() {
+    if(!treinos || treinos.length === 0) { document.getElementById('slideContent').innerHTML = "<p>Nenhum treinamento liberado.</p>"; return; }
+    var t = treinos[currentSlide];
+    var pctGlobal = Math.round((currentSlide / treinos.length) * 100);
+    document.getElementById('indicadorGlobalTrilha').innerText = "🎥 Vídeo " + (currentSlide + 1) + " de " + treinos.length + " | Progresso: " + pctGlobal + "%";
+
+    var videoId = ""; var m = t.url.match(/(?:v=|youtu\.be\/|embed\/)([^&]+)/);
+    if(m) videoId = m[1]; else videoId = t.url.split('/').pop();
+    var embedUrl = "https://www.youtube.com/embed/" + videoId;
+    var html = "<h3>" + t.titulo + "</h3>";
+    
+    if (subStep === 0) { html += '<div class="video-container"><iframe src="' + embedUrl + '" frameborder="0" allowfullscreen></iframe></div>'; } 
+    else {
+      var qIdx = subStep - 1; var q = t.questoes[qIdx];
+      html += '<div style="background:#fdfbf7; padding:25px; border-radius:12px; text-align:left; max-width:650px; margin: 15px auto; border:1px solid #ffe0b2;">' + '<p><strong>Questão ' + (qIdx + 1) + ':</strong> ' + q.enunciado + '</p>';
+      if(q.a) html += '<div class="alternativa"><label><input type="radio" name="q_bloco" value="A"> A) ' + q.a + '</label></div>';
+      if(q.b) html += '<div class="alternativa"><label><input type="radio" name="q_bloco" value="B"> B) ' + q.b + '</label></div>';
+      if(q.c) html += '<div class="alternativa"><label><input type="radio" name="q_bloco" value="C"> C) ' + q.c + '</label></div>';
+      if(q.d) html += '<div class="alternativa"><label><input type="radio" name="q_bloco" value="D"> D) ' + q.d + '</label></div>';
+      var textB = (qIdx === t.questoes.length - 1) ? "Finalizar Trilha" : "Avançar Questão";
+      html += '<button class="action-btn" onclick="confirmarQuestaoBloco()">' + textB + '</button></div>';
+    }
+    document.getElementById('slideContent').innerHTML = html;
+  }
+
+  function confirmarQuestaoBloco() {
+    var checado = document.querySelector('input[name="q_bloco"]:checked');
+    if(!checado) return exibirAlertaGeral("Selecione uma alternativa antes de continuar!", "Campo Obrigatório");
+    mudarSlide(1);
+  }
+
+  function mudarSlide(dir) {
+    if(treinos.length === 0) return;
+    var t = treinos[currentSlide];
+    if (dir === 1) { if (subStep < t.questoes.length) subStep++; else { currentSlide++; subStep = 0; } }
+    else { if (subStep > 0) subStep--; else { currentSlide--; subStep = treinos[currentSlide] ? treinos[currentSlide].questoes.length : 0; } }
+    if(currentSlide < 0) { currentSlide = 0; subStep = 0; }
+    if(currentSlide >= treinos.length) { exibirAlertaGeral("Treinamento Concluído com Sucesso!", "Parabéns!", "fa-check-circle", "#4CAF50"); mostrar('dashboard'); return; }
+    renderSlide();
+  }
+
+  function abrirGuiasEstagiario() {
+    mostrar('guiasManuais'); document.getElementById('gridEbooksEstagiario').innerHTML = "<p>Buscando...</p>";
+    google.script.run.withSuccessHandler(function(guias) {
+      if(guias.length === 0) { document.getElementById('gridEbooksEstagiario').innerHTML = "<p>Nenhum material publicado.</p>"; return; }
+      var html = '';
+      for(var i=0; i<guias.length; i++) {
+         html += '<div class="ebook-card"><i class="fas fa-book-open"></i><h4>' + guias[i].titulo + '</h4><a href="' + guias[i].link + '" target="_blank" style="display:block; padding:11px; background:linear-gradient(135deg, #ff9800, #f57c00); color:white; text-decoration:none; border-radius:6px; font-size:0.9em; font-weight:bold;">Abrir Biblioteca</a></div>';
+      }
+      document.getElementById('gridEbooksEstagiario').innerHTML = html;
+    }).carregarGuias();
+  }
+
+  function abrirChecklist() {
+    mostrar('checklistEst'); document.getElementById('areaAtivaChecklist').style.display = 'none'; document.getElementById('bloqueioChecklistAviso').style.display = 'none';
+    google.script.run.withSuccessHandler(function(jaPreencheu) {
+      if(jaPreencheu) document.getElementById('bloqueioChecklistAviso').style.display = 'block';
+      else {
+        document.getElementById('areaAtivaChecklist').style.display = 'block';
+        document.getElementById('tabelaChecklistEst').innerHTML = "<tr><td>Construindo matriz...</td></tr>";
+        google.script.run.withSuccessHandler(renderChecklist).carregarPerguntasChecklist();
+      }
+    }).verificarChecklistHoje(ESTAGIARIO_LOGADO);
+  }
+
+  function renderChecklist(perguntas) {
+    if(perguntas.length === 0) { document.getElementById('tabelaChecklistEst').innerHTML = "<tr><td>Nenhuma tarefa cadastrada.</td></tr>"; return; }
+    var html = '<tr><th>ATIVIDADES PARA DESENVOLVER</th><th style="width:240px;">RESPOSTA</th></tr>';
+    var secaoAtual = ''; var subsecaoAtual = '';
+    for(var i=0; i<perguntas.length; i++) {
+      var p = perguntas[i];
+      if(p.secao !== secaoAtual) { html += '<tr><td colspan="2" style="background: linear-gradient(135deg, #ff9800, #f57c00); color:white; font-weight:bold; padding:12px;">' + p.secao + '</td></tr>'; secaoAtual = p.secao; subsecaoAtual = ''; }
+      if(p.subsecao !== subsecaoAtual) { html += '<tr><td colspan="2" class="header-subsecao">Subseção: ' + p.subsecao + '</td></tr>'; subsecaoAtual = p.subsecao; }
+      html += '<tr><td class="chk-pergunta-texto" style="padding-left:25px;">• ' + p.pergunta + '</td><td><div class="chk-options-row"><label><input type="radio" name="chk_' + i + '" value="Sim" onchange="calcularFatorProgresso()"> Sim</label><label><input type="radio" name="chk_' + i + '" value="Não" onchange="calcularFatorProgresso()"> Não</label><label><input type="radio" name="chk_' + i + '" value="Ausente" onchange="calcularFatorProgresso()"> Ausente</label></div></td></tr>';
+    }
+    document.getElementById('tabelaChecklistEst').innerHTML = html; calcularFatorProgresso();
+  }
+
+  function calcularFatorProgresso() {
+    var total = document.querySelectorAll('#tabelaChecklistEst tr td.chk-pergunta-texto').length; if (total === 0) return;
+    var marcados = 0; var deDuplicados = [];
+    var radios = document.querySelectorAll('#tabelaChecklistEst input[type="radio"]:checked');
+    for(var i=0; i<radios.length; i++) { if(deDuplicados.indexOf(radios[i].name) === -1) { deDuplicados.push(radios[i].name); marcados++; } }
+    var pct = Math.round((marcados / total) * 100);
+    document.getElementById('barraFator').style.width = pct + '%';
+    document.getElementById('textoFator').innerText = pct + '% Preenchido';
+    if(pct === 100 && document.getElementById('modalChecklistSucesso').style.display !== 'flex') { mostrarModalChecklistSucesso(); }
+  }
+
+  function enviarChecklistFim() {
+    var total = document.querySelectorAll('#tabelaChecklistEst tr td.chk-pergunta-texto').length;
+    var marcadosEls = document.querySelectorAll('#tabelaChecklistEst input[type="radio"]:checked');
+    if(marcadosEls.length < total) return exibirAlertaGeral("Responda a todas as tarefas do checklist antes do envio corporativo.", "Formulário Incompleto");
+    if(document.getElementById('senhaSup').value !== '987654') return exibirAlertaGeral("Credencial de Supervisor Incorreta!", "Validação Negada", "fa-ban", "#f44336");
+    
+    var validos = 0, totalSim = 0, totalNao = 0, totalAusente = 0, itensNaoFeitos = [];
+    var perguntasEls = document.querySelectorAll('#tabelaChecklistEst td.chk-pergunta-texto');
+    for(var i = 0; i < perguntasEls.length; i++) {
+       var textoPerg = perguntasEls[i].innerText.replace('• ', '').trim();
+       var radioMarcado = document.querySelector('input[name="chk_' + i + '"]:checked');
+       if(radioMarcado) {
+          if(radioMarcado.value === 'Sim') { totalSim++; validos++; }
+          if(radioMarcado.value === 'Ausente') { totalAusente++; validos++; }
+          if(radioMarcado.value === 'Não') { totalNao++; itensNaoFeitos.push(textoPerg); }
+       }
+    }
+    
+    var pctCalculado = Math.round((validos / total) * 100);
+    var pctSimAusente = Math.round(((totalSim + totalAusente) / total) * 100);
+    var pctNao = Math.round((totalNao / total) * 100);
+    
+    var detalhesObj = { pctSimAusente: pctSimAusente, pctNao: pctNao, naoFeitos: itensNaoFeitos, totalSim: totalSim, totalNao: totalNao, totalAusente: totalAusente };
+
+    google.script.run.withSuccessHandler(function() { 
+       exibirAlertaGeral('Checklist validado e transmitido com absoluto êxito!', 'Sucesso', 'fa-check-circle', '#4CAF50');
+       document.getElementById('senhaSup').value = ''; mostrar('dashboard'); 
+    }).salvarRespostaChecklist({ nome: ESTAGIARIO_LOGADO, percentual: pctCalculado, detalhes: JSON.stringify(detalhesObj) });
+  }
+</script>
+</body>
+</html>
