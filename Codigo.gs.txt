@@ -1,0 +1,675 @@
+function doGet(e) {
+  var page = e.parameter.page || 'Index';
+  var nome = e.parameter.nome || ''; 
+  var paginasPermitidas = ['Index', 'Estagiario', 'Coordenacao'];
+  
+  if (paginasPermitidas.indexOf(page) === -1) {
+    page = 'Index';
+  }
+  
+  var template = HtmlService.createTemplateFromFile(page);
+  template.nomeUsuario = nome; 
+  
+  return template.evaluate()
+    .setTitle('Portal do Estagiário')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+function getUrlApp() {
+  return ScriptApp.getService().getUrl();
+}
+
+const ID_PLANILHA = '1WWYigcEgUKXikNeTga-6zGotwkaiXERoH1o-U6TGIXg';
+
+// --- SISTEMA DE LOGIN INTELIGENTE ---
+function verificarLoginEstagiario(senha) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Estagiarios');
+  
+  if (sheet) {
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][2].toString().trim() === senha.toString().trim()) {
+        
+        var statusAcesso = String(data[i][9] || 'Ativo').trim();
+        if (statusAcesso === 'Bloqueado') {
+           return {sucesso: false, msg: "Acesso Bloqueado. Entre em contato com a Coordenação."};
+        }
+        
+        return {sucesso: true, nome: data[i][1], url: ScriptApp.getService().getUrl()};
+      }
+    }
+  }
+  return {sucesso: false, msg: "Senha ou ID inválido. Solicite cadastro à Coordenação."};
+}
+
+function getDadosEstagiario(nome) {
+  try {
+    var ss = SpreadsheetApp.openById(ID_PLANILHA);
+    var sheet = ss.getSheetByName('Estagiarios');
+    
+    var dados = { nome: nome, tipo: "Não cadastrado", horario: "Não cadastrado" };
+    if (!sheet) return dados;
+    
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][1] === nome) {
+        dados.tipo = data[i][3]; 
+        var inicio = data[i][4] instanceof Date ? data[i][4].toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : data[i][4];
+        var fim = data[i][5] instanceof Date ? data[i][5].toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : data[i][5];
+        dados.horario = (inicio && fim) ? inicio + " às " + fim : "Não definido";
+        break;
+      }
+    }
+    return dados;
+  } catch(e) {
+    return { nome: nome, tipo: "Erro ao buscar", horario: "Erro" };
+  }
+}
+
+function salvarEstagiario(obj) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Estagiarios') || ss.insertSheet('Estagiarios');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Data Cadastro', 'Nome Completo', 'Senha/ID', 'Tipo', 'Início', 'Fim', 'Total Horas', 'Dias', 'Categoria', 'Status']);
+  }
+  var diasConcat = obj.dias.join(', ');
+  sheet.appendRow([new Date(), obj.nome, obj.senha, obj.tipo, obj.inicio, obj.fim, obj.totalHoras, diasConcat, obj.categoria, 'Ativo']);
+  return "Sucesso";
+}
+
+function carregarEstagiarios() {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Estagiarios');
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getValues();
+  var ests = [];
+  for (var i = 1; i < data.length; i++) {
+    ests.push({ nome: data[i][1], tipo: data[i][3], dias: data[i][7], status: data[i][9] || 'Ativo' });
+  }
+  return ests;
+}
+
+function excluirEstagiario(nome) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Estagiarios');
+  var data = sheet.getDataRange().getValues();
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (data[i][1] === nome) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+  return "Sucesso";
+}
+
+function salvarDados(obj) {
+  try {
+    var ss = SpreadsheetApp.openById(ID_PLANILHA);
+    var timezone = ss.getSpreadsheetTimeZone() || "America/Sao_Paulo";
+    
+    var mesAnoLancamento = "";
+    var mesLancamento = "";
+    var anoLancamento = "";
+    
+    if (obj.dataOcorrencia && obj.dataOcorrencia.indexOf('-') > -1) {
+      var partes = obj.dataOcorrencia.split('-');
+      mesLancamento = partes[1];
+      anoLancamento = partes[0];
+      mesAnoLancamento = mesLancamento + "/" + anoLancamento;
+    } else {
+      mesAnoLancamento = Utilities.formatDate(new Date(), timezone, "MM/yyyy");
+    }
+    
+    var sheetFechamentos = ss.getSheetByName('Fechamentos');
+    if (sheetFechamentos && mesAnoLancamento) {
+      var dataF = sheetFechamentos.getDataRange().getDisplayValues();
+      for (var i = 1; i < dataF.length; i++) {
+        if (dataF[i][1] === obj.estagiario && dataF[i][2] === mesAnoLancamento) {
+          return "Erro: O mês operacional " + mesAnoLancamento + " já foi trancado e enviado para a coordenação! Não é permitido realizar novos lançamentos neste período.";
+        }
+      }
+    }
+    
+    if (mesLancamento && anoLancamento) {
+      var dataLanc = new Date(anoLancamento, parseInt(mesLancamento, 10) - 1, 1);
+      var dataMesAnterior = new Date(dataLanc.getFullYear(), dataLanc.getMonth() - 1, 1);
+      var mesAnt = ("0" + (dataMesAnterior.getMonth() + 1)).slice(-2);
+      var anoAnt = dataMesAnterior.getFullYear();
+      var mesAnoAnterior = mesAnt + "/" + anoAnt;
+      
+      var sheetReg = ss.getSheetByName('Registro');
+      var possuiHistoricoMesAnterior = false;
+      if (sheetReg) {
+        var regValues = sheetReg.getDataRange().getValues();
+        for (var j = 1; j < regValues.length; j++) {
+          if (regValues[j][11] === obj.estagiario) {
+            var dOcorr = regValues[j][4];
+            if (dOcorr instanceof Date) {
+              if (Utilities.formatDate(dOcorr, timezone, "MM/yyyy") === mesAnoAnterior) {
+                possuiHistoricoMesAnterior = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      if (possuiHistoricoMesAnterior && sheetFechamentos) {
+        var dataF2 = sheetFechamentos.getDataRange().getDisplayValues();
+        var mesAnteriorEstaFechado = false;
+        for (var k = 1; k < dataF2.length; k++) {
+          if (dataF2[k][1] === obj.estagiario && dataF2[k][2] === mesAnoAnterior) {
+            mesAnteriorEstaFechado = true;
+            break;
+          }
+        }
+        if (!mesAnteriorEstaFechado) {
+          return "Erro: Identificamos atividades em aberto no mês anterior (" + mesAnoAnterior + "). Você deve acessar a aba 'Meus Relatórios' e clicar em 'Lançar Gratificações do Mês' para encerrar o ciclo anterior antes de iniciar os registros deste novo mês!";
+        }
+      }
+    }
+    
+    var sheet = ss.getSheetByName('Registro') || ss.insertSheet('Registro');
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(['Data Registro', 'Tipo', 'Aluno', 'Matricula', 'Data Ocorrencia', 'Meio Comunicacao', 'Motivo', 'Agendou', 'Previsao Retorno', 'Horario', 'Detalhes', 'Estagiario', 'Compareceu', 'Faturamento']);
+    }
+    
+    sheet.appendRow([
+      new Date(), obj.tipo, obj.aluno, obj.matricula, obj.dataOcorrencia, obj.meioComunicacao, 
+      obj.motivo, obj.agendou, obj.previsaoRetorno, obj.horario, obj.detalhes, obj.estagiario, obj.compareceu, 'Pendente'
+    ]);
+    return "Sucesso";
+    
+  } catch (err) {
+    return "Erro interno: " + err.message;
+  }
+}
+
+function fecharMesEstagiario(nomeEstagiario, mesAnoStr) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheetFechamentos = ss.getSheetByName('Fechamentos') || ss.insertSheet('Fechamentos');
+  if (sheetFechamentos.getLastRow() === 0) {
+    sheetFechamentos.appendRow(['Data Fechamento', 'Estagiario', 'MesAno']);
+  }
+  
+  var dataF = sheetFechamentos.getDataRange().getDisplayValues();
+  var jaFechado = false;
+  for (var i = 1; i < dataF.length; i++) {
+    if (dataF[i][1] === nomeEstagiario && dataF[i][2] === mesAnoStr) {
+      jaFechado = true;
+      break;
+    }
+  }
+  if (!jaFechado) {
+    sheetFechamentos.appendRow([new Date(), nomeEstagiario, mesAnoStr]);
+  }
+  return "Sucesso";
+}
+
+function deletarRegistroDaPlanilha(linha) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Registro');
+  if (sheet && linha > 1) {
+    sheet.deleteRow(linha);
+  }
+  return "Sucesso";
+}
+
+function carregarReposicoesPendentes(nomeEstagiario) {
+  try {
+    var ss = SpreadsheetApp.openById(ID_PLANILHA);
+    var sheet = ss.getSheetByName('Registro');
+    if (!sheet) return [];
+    
+    var data = sheet.getDataRange().getDisplayValues(); 
+    var pendentes = [];
+    var nomeBuscado = String(nomeEstagiario).trim().toLowerCase();
+    
+    var timezonePlanilha = ss.getSpreadsheetTimeZone() || "America/Sao_Paulo";
+    var mesAnoAtualStr = Utilities.formatDate(new Date(), timezonePlanilha, "MM/yyyy");
+    
+    for (var i = 1; i < data.length; i++) {
+      var agendou = String(data[i][7]).trim();
+      var compareceu = String(data[i][12]).trim();
+      var estagiarioRow = String(data[i][11]).trim().toLowerCase();
+      
+      if (agendou === 'Sim' && compareceu === 'Pendente' && estagiarioRow === nomeBuscado) {
+        var df = String(data[i][4]);
+        var splitData = df.split('/');
+        var rowMesAno = "";
+        if (splitData.length >= 3) {
+          rowMesAno = splitData[1] + "/" + splitData[2];
+        }
+        var deMesAnterior = (rowMesAno && rowMesAno !== mesAnoAtualStr);
+
+        pendentes.push({
+          indexLinha: i + 1,
+          aluno: data[i][2],
+          dataFalta: data[i][4],
+          expectativaVolta: data[i][8],
+          horarioVolta: data[i][9],
+          tipoReg: data[i][1],
+          atrasado: deMesAnterior
+        });
+      }
+    }
+    return pendentes;
+  } catch (err) {
+    return [];
+  }
+}
+
+function atualizarStatusCompareceu(linha, status) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Registro');
+  if (!sheet) return "Erro";
+  
+  sheet.getRange(linha, 13).setValue(status);
+  return "Sucesso";
+}
+
+function carregarRegistros() {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Registro');
+  var sheetF = ss.getSheetByName('Fechamentos');
+  if (!sheet) return [];
+
+  var fechados = {};
+  if(sheetF) {
+     var fVals = sheetF.getDataRange().getDisplayValues();
+     for(var f=1; f<fVals.length; f++) {
+        var n = fVals[f][1];
+        if(!fechados[n]) fechados[n] = [];
+        fechados[n].push(fVals[f][2]); 
+     }
+  }
+
+  var timezone = ss.getSpreadsheetTimeZone() || "America/Sao_Paulo";
+  var data = sheet.getDataRange().getDisplayValues();
+  var dataValues = sheet.getDataRange().getValues();
+
+  for (var i = 0; i < data.length; i++) {
+    while(data[i].length < 14) data[i].push("");
+    if(data[i][13] === "" && i > 0) data[i][13] = "Pendente"; 
+    data[i].push(i + 1); 
+
+    var isFechado = false;
+    if (i > 0) {
+        var nEst = data[i][11];
+        var dObj = dataValues[i][4];
+        var mesAno = "";
+        if(dObj instanceof Date) {
+            mesAno = Utilities.formatDate(dObj, timezone, "MM/yyyy");
+        } else if(typeof dObj === 'string' && dObj.indexOf('-') > -1) { 
+            var p = dObj.split('-'); mesAno = p[1]+"/"+p[0]; 
+        }
+        if(fechados[nEst] && fechados[nEst].indexOf(mesAno) > -1) {
+            isFechado = true;
+        }
+    }
+    data[i].push(isFechado); 
+  }
+  return data;
+}
+
+function carregarMetricasIndividuais(nomeEstagiario) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Registro');
+  var sheetF = ss.getSheetByName('Fechamentos');
+  var stats = { ligacoes: 0, cancelamentos: 0, materiais: 0 };
+  if (!sheet) return stats;
+  
+  var fechados = [];
+  if (sheetF) {
+     var dataF = sheetF.getDataRange().getDisplayValues();
+     for(var f=1; f<dataF.length; f++) {
+        if(dataF[f][1] === nomeEstagiario) fechados.push(dataF[f][2]);
+     }
+  }
+
+  var timezone = ss.getSpreadsheetTimeZone() || "America/Sao_Paulo";
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][11] === nomeEstagiario) {
+      var mesAno = "";
+      if (data[i][4] instanceof Date) {
+         mesAno = Utilities.formatDate(data[i][4], timezone, "MM/yyyy");
+      } else if (typeof data[i][4] === 'string' && data[i][4].indexOf('-') > -1) {
+         var p = data[i][4].split('-');
+         mesAno = p[1] + "/" + p[0];
+      }
+      
+      if (fechados.indexOf(mesAno) === -1) {
+          if (data[i][1] === 'Ligações e Reposições') stats.ligacoes++;
+          if (data[i][1] === 'Cancelamento') stats.cancelamentos++;
+          if (data[i][1] === 'Materiais' || data[i][1] === 'Materials') stats.materiais++;
+      }
+    }
+  }
+  return stats;
+}
+
+function carregarMetricasCoordenacao() {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var regSheet = ss.getSheetByName('Registro');
+  var chkSheet = ss.getSheetByName('Respostas_Checklist');
+  var sheetF = ss.getSheetByName('Fechamentos');
+  
+  var dashboardMetricas = {};
+
+  if (sheetF) {
+     var fVals = sheetF.getDataRange().getDisplayValues();
+     for (var f = 1; f < fVals.length; f++) {
+        var nomeEst = String(fVals[f][1]).trim();
+        var mesAnoF = String(fVals[f][2]).trim();
+        if (nomeEst && mesAnoF) {
+           if (!dashboardMetricas[nomeEst]) dashboardMetricas[nomeEst] = { meses: {} };
+           if (!dashboardMetricas[nomeEst].meses[mesAnoF]) {
+              dashboardMetricas[nomeEst].meses[mesAnoF] = { ligacoes: 0, cancelamentos: 0, materiais: 0, checklists: 0 };
+           }
+        }
+     }
+  }
+
+  var timezone = ss.getSpreadsheetTimeZone() || "America/Sao_Paulo";
+
+  if (regSheet) {
+    var regData = regSheet.getDataRange().getValues();
+    for (var i = 1; i < regData.length; i++) {
+      var nEst = String(regData[i][11]).trim();
+      var dReg = regData[i][4];
+      var mesAnoReg = "";
+      if (dReg instanceof Date) mesAnoReg = Utilities.formatDate(dReg, timezone, "MM/yyyy");
+      else if (typeof dReg === 'string' && dReg.indexOf('-') > -1) { var p = dReg.split('-'); mesAnoReg = p[1] + "/" + p[0]; }
+      else mesAnoReg = "Sem Data";
+
+      if (dashboardMetricas[nEst] && dashboardMetricas[nEst].meses[mesAnoReg]) {
+         var acaoTipo = regData[i][1];
+         if (acaoTipo === 'Ligações e Reposições') dashboardMetricas[nEst].meses[mesAnoReg].ligacoes++;
+         if (acaoTipo === 'Cancelamento') dashboardMetricas[nEst].meses[mesAnoReg].cancelamentos++;
+         if (acaoTipo === 'Materiais' || acaoTipo === 'Materials') dashboardMetricas[nEst].meses[mesAnoReg].materiais++;
+      }
+    }
+  }
+
+  if (chkSheet) {
+    var chkData = chkSheet.getDataRange().getValues();
+    for (var j = 1; j < chkData.length; j++) {
+      var nEstChk = String(chkData[j][1]).trim();
+      var dChk = chkData[j][0];
+      var mesAnoChk = "";
+      if (dChk instanceof Date) mesAnoChk = Utilities.formatDate(dChk, timezone, "MM/yyyy");
+      else mesAnoChk = "Sem Data";
+
+      if (dashboardMetricas[nEstChk] && dashboardMetricas[nEstChk].meses[mesAnoChk]) {
+         dashboardMetricas[nEstChk].meses[mesAnoChk].checklists++;
+      }
+    }
+  }
+  return dashboardMetricas;
+}
+
+function carregarDadosAuditoria(nomeEstagiario) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var result = { registros: [], checklists: [] };
+  
+  var sReg = ss.getSheetByName('Registro');
+  if (sReg) {
+     var rVals = sReg.getDataRange().getDisplayValues();
+     for(var i = 1; i < rVals.length; i++){
+        while(rVals[i].length < 14) rVals[i].push("");
+        if(rVals[i][13] === "") rVals[i][13] = "Pendente";
+        rVals[i].push(i + 1); 
+        if(String(rVals[i][11]).trim() === String(nomeEstagiario).trim() && rVals[i][1] !== 'Checklist Diário Concluído') {
+            result.registros.push(rVals[i]);
+        }
+     }
+  }
+  
+  var sChk = ss.getSheetByName('Respostas_Checklist');
+  if(sChk) {
+     var cVals = sChk.getDataRange().getDisplayValues();
+     for(var j = 1; j < cVals.length; j++){
+        if(String(cVals[j][1]).trim() === String(nomeEstagiario).trim()){
+            result.checklists.push(cVals[j]); 
+        }
+     }
+  }
+  
+  return result;
+}
+
+function carregarTreinamentos() {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Treinamentos');
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getValues();
+  var mapaVideos = {};
+  for (var i = 1; i < data.length; i++) {
+    var titulo = data[i][1];
+    if (!mapaVideos[titulo]) mapaVideos[titulo] = { titulo: titulo, url: data[i][2], questoes: [] };
+    if (data[i][3]) {
+      var alts = data[i][4] ? data[i][4].split('_||_') : ['', '', '', '', ''];
+      mapaVideos[titulo].questoes.push({ enunciado: data[i][3], a: alts[0], b: alts[1], c: alts[2], d: alts[3], correta: data[i][5] });
+    }
+  }
+  return Object.values(mapaVideos);
+}
+
+function carregarGuias() {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Guias');
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getValues();
+  var guias = [];
+  for (var i = 1; i < data.length; i++) guias.push({ titulo: data[i][1], link: data[i][2] });
+  return guias;
+}
+
+function carregarPerguntasChecklist() {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Config_Checklist');
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getValues();
+  var perguntas = [];
+  for (var i = 1; i < data.length; i++) perguntas.push({ secao: data[i][1], subsecao: data[i][2], pergunta: data[i][3] });
+  return perguntas;
+}
+
+function verificarChecklistHoje(nomeEstagiario) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Respostas_Checklist');
+  if (!sheet) return false;
+  var data = sheet.getDataRange().getValues();
+  var hojeStr = new Date().toLocaleDateString('pt-BR');
+  for (var i = 1; i < data.length; i++) {
+    var dataRegStr = new Date(data[i][0]).toLocaleDateString('pt-BR');
+    if (dataRegStr === hojeStr && data[i][1] === nomeEstagiario) return true;
+  }
+  return false;
+}
+
+function salvarRespostaChecklist(respostas) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Respostas_Checklist');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Data', 'Estagiário', 'Ação', 'Status', 'Percentual Cumprido', 'Detalhes']);
+  }
+  sheet.appendRow([new Date(), respostas.nome, "Checklist Diário Concluído", "Validado pelo Supervisor", respostas.percentual || 0, respostas.detalhes || ""]);
+  return "Sucesso";
+}
+
+function atualizarTreinamentoBackend(tituloAntigo, novosDados) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Treinamentos');
+  if (!sheet) return "Erro: Aba não encontrada";
+  
+  var data = sheet.getDataRange().getValues();
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (data[i][1] === tituloAntigo) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+  return salvarTreinamentoLote(novosDados);
+}
+
+function salvarTreinamentoLote(dados) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Treinamentos') || SpreadsheetApp.openById(ID_PLANILHA).insertSheet('Treinamentos');
+  if (sheet.getLastRow() === 0) sheet.appendRow(['Data', 'Titulo', 'URL', 'Enunciado', 'Alternativas', 'Correta']);
+  
+  if (dados.questoes && dados.questoes.length > 0) {
+    dados.questoes.forEach(function(q) {
+      var alts = [q.a, q.b, q.c, q.d, q.e].join('_||_');
+      sheet.appendRow([new Date(), dados.titulo, dados.url, q.enunciado, alts, q.correta]);
+    });
+  } else {
+    sheet.appendRow([new Date(), dados.titulo, dados.url, '', '', '']);
+  }
+  return "Sucesso";
+}
+
+function alternarStatusEstagiario(nome, statusAtual) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Estagiarios');
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][1] === nome) {
+      var novoStatus = (statusAtual === 'Bloqueado') ? 'Ativo' : 'Bloqueado';
+      sheet.getRange(i + 1, 10).setValue(novoStatus); 
+      return novoStatus;
+    }
+  }
+  return "Erro";
+}
+
+function atualizarEstagiario(nomeAntigo, obj) {
+  excluirEstagiario(nomeAntigo); 
+  salvarEstagiario(obj); 
+  return "Sucesso";
+}
+
+function buscarNotificacoesRecentes() {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var notificacoesMap = {};
+  
+  var extrairData = function(dataOrigem) {
+      if(dataOrigem instanceof Date) return dataOrigem.getTime();
+      return new Date(dataOrigem).getTime();
+  };
+  
+  var sheetReg = ss.getSheetByName('Registro');
+  if (sheetReg) {
+    var regData = sheetReg.getDataRange().getValues();
+    for (var i = regData.length - 1; i >= Math.max(1, regData.length - 150); i--) {
+      var est = String(regData[i][11]).trim();
+      if (!est) continue;
+      
+      var statusFaturamento = String(regData[i][13] || 'Pendente').trim();
+      if (statusFaturamento !== 'Pendente') continue;
+      
+      var tipo = String(regData[i][1]).trim();
+      var agendou = String(regData[i][7]).trim();
+      var compareceu = String(regData[i][12]).trim();
+
+      if (agendou === 'Sim' && compareceu === 'Pendente') {
+          continue; 
+      }
+      
+      var acaoTexto = "Lançou: " + tipo;
+      if (agendou === 'Sim') {
+          acaoTexto = "Confirmou Presença: " + tipo;
+      }
+      
+      var key = "REG_" + i; 
+      if(!notificacoesMap[key]) {
+         notificacoesMap[key] = {
+            dataRaw: extrairData(regData[i][0]),
+            estagiario: est,
+            acao: acaoTexto,
+            detalhe: "Referente ao Aluno: " + String(regData[i][2]).trim()
+         };
+      }
+    }
+  }
+  
+  var sheetChk = ss.getSheetByName('Respostas_Checklist');
+  if (sheetChk) {
+    var chkData = sheetChk.getDataRange().getValues();
+    for (var j = chkData.length - 1; j >= Math.max(1, chkData.length - 60); j--) {
+      var estChk = String(chkData[j][1]).trim();
+      if (!estChk) continue;
+      
+      var keyChk = "CHK_" + j; 
+      if(!notificacoesMap[keyChk]) {
+         var dTime = extrairData(chkData[j][0]);
+         var diffDias = (new Date().getTime() - dTime) / (1000 * 3600 * 24);
+         if(diffDias <= 7) { 
+             notificacoesMap[keyChk] = {
+                dataRaw: dTime,
+                estagiario: estChk,
+                acao: "Checklist Diário Concluído",
+                detalhe: "Validado pelo Supervisor"
+             };
+         }
+      }
+    }
+  }
+  
+  var notificacoesArr = Object.values(notificacoesMap);
+  notificacoesArr.sort(function(a, b) { return b.dataRaw - a.dataRaw; });
+  return notificacoesArr.slice(0, 30);
+}
+
+function salvarFaturamentosLote(loteFaturamentos) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Registro');
+  if (!sheet) return "Erro";
+  
+  loteFaturamentos.forEach(function(item) {
+     sheet.getRange(item.linha, 14).setValue(item.status);
+  });
+  return "Sucesso";
+}
+
+function excluirConfigChecklist(pergunta) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Config_Checklist');
+  var data = sheet.getDataRange().getValues();
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][3]).trim() === String(pergunta).trim()) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+  return "Sucesso";
+}
+
+function salvarLoteChecklist(lote) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Config_Checklist') || ss.insertSheet('Config_Checklist');
+  if (sheet.getLastRow() === 0) sheet.appendRow(['Data', 'Seção', 'Subseção', 'Pergunta']);
+  
+  lote.forEach(function(item) {
+    sheet.appendRow([new Date(), item.secao, item.subsecao, item.pergunta]);
+  });
+  return "Sucesso";
+}
+
+function excluirGuia(titulo) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Guias');
+  var data = sheet.getDataRange().getValues();
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][1]).trim() === String(titulo).trim()) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+  return "Sucesso";
+}
+
+function salvarLinkGuia(obj) {
+  var ss = SpreadsheetApp.openById(ID_PLANILHA);
+  var sheet = ss.getSheetByName('Guias') || ss.insertSheet('Guias');
+  if (sheet.getLastRow() === 0) sheet.appendRow(['Data', 'Título', 'Link']);
+  sheet.appendRow([new Date(), obj.titulo, obj.link]);
+  return "Sucesso";
+}
+
+function excluirTreinamento(titulo) {
+  var sheet = SpreadsheetApp.openById(ID_PLANILHA).getSheetByName('Treinamentos');
+  var data = sheet.getDataRange().getValues();
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][1]).trim() === String(titulo).trim()) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+  return "Sucesso";
+}
