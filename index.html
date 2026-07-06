@@ -67,7 +67,6 @@
   <button class="btn-login" onclick="fazerLogin()" id="btnAcesso"><i class="fas fa-sign-in-alt"></i> Entrar no Sistema</button>
 </div>
 
-<!-- MODAL ALERTA -->
 <div class="modal-overlay" id="modalErro">
   <div class="modal-box">
     <i class="fas fa-exclamation-triangle"></i>
@@ -78,6 +77,25 @@
 </div>
 
 <script>
+  // IMPORTANTE: COLOQUE A MESMA URL DO SEU WEB APP AQUI TAMBÉM
+  const API_URL = "SUA_URL_DO_WEB_APP_AQUI/exec";
+
+  function chamarAPI(action, payload, onSuccess) {
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: action, payload: payload })
+    })
+    .then(res => res.json())
+    .then(data => { if (onSuccess) onSuccess(data); })
+    .catch(err => {
+      mostrarErro("Erro de conexão com o servidor. Verifique o seu acesso e tente novamente.");
+      var btn = document.getElementById('btnAcesso');
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Sistema';
+      btn.disabled = false;
+      console.error("Erro API:", err);
+    });
+  }
+
   function mostrarErro(msg) {
     document.getElementById('msgErro').innerText = msg;
     document.getElementById('modalErro').style.display = 'flex';
@@ -95,24 +113,25 @@
 
     if(tipo === "Coordenacao") {
        if(senha === "987654") { 
-           google.script.run.withSuccessHandler(function(url) {
-              window.open(url + "?page=Coordenacao", "_top");
-           }).getUrlApp();
+           // Redireciona diretamente para o arquivo local
+           window.open("Coordenacao.html", "_top");
        } else {
            mostrarErro("Credencial de Coordenação incorreta!");
            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Sistema';
            btn.disabled = false;
        }
     } else {
-       google.script.run.withSuccessHandler(function(res) {
+       // Consulta a planilha via API para validar o estagiário
+       chamarAPI('verificarLoginEstagiario', { senha: senha }, function(res) {
            if(res.sucesso) {
-               window.open(res.url + "?page=Estagiario&nome=" + encodeURIComponent(res.nome), "_top");
+               // Redireciona para o arquivo local passando o nome na URL
+               window.open("Estagiario.html?nome=" + encodeURIComponent(res.nome), "_top");
            } else {
-               mostrarErro(res.msg);
+               mostrarErro(res.msg || "Erro na validação.");
                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Sistema';
                btn.disabled = false;
            }
-       }).verificarLoginEstagiario(senha);
+       });
     }
   }
 </script>
